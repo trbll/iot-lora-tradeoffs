@@ -1344,7 +1344,7 @@
         LoRa devices spend <span class="has-tip"><strong>99%+ of their time sleeping</strong><span class="tooltip">A device transmitting once per hour with SF7 is active for only ~2 seconds out of 3,600. That's a duty cycle of ~0.05%. The rest of the time the radio is off, drawing almost no power.</span></span>.
         The difference between sleep current and transmit current spans
         <span class="has-tip"><strong>orders of magnitude</strong><span class="tooltip">Sleep current is ~0.045 mA (45 microamps). Transmit current is ~83 mA. That's a ratio of roughly <strong>1,844&times;</strong> &mdash; almost four orders of magnitude. This enormous gap is what makes multi-year battery life possible.</span></span> &mdash; this is why LoRa devices can run for years on a coin cell.
-        Based on Semtech SX1272 transceiver data.
+        Based on Multitech mDot / SX1272 measurements from Casals et al., <em>Sensors</em> 2017.
       </p>
 
       <div class="pwr-grid">
@@ -1433,7 +1433,7 @@
         </div>
 
         <div class="batt-input-group">
-          <label>Model Constants (Semtech SX1272)</label>
+          <label>Model Constants (Multitech mDot / SX1272, from Casals et al.)</label>
           <div class="batt-params-row">
             <div class="batt-param-card">
               <div class="label">I<sub>S</sub> (Sleep)</div>
@@ -1446,9 +1446,14 @@
               <div style="font-size:0.65rem; color:var(--text-dim); margin-top:2px;">@ 20 dBm</div>
             </div>
             <div class="batt-param-card">
-              <div class="label">I<sub>RX</sub> (Receive)</div>
-              <div class="value" style="color: var(--accent);">10.5 mA</div>
-              <div style="font-size:0.65rem; color:var(--text-dim); margin-top:2px;">RX window</div>
+              <div class="label">I<sub>RX1</sub> (Receive)</div>
+              <div class="value" style="color: var(--accent);">38.1 mA</div>
+              <div style="font-size:0.65rem; color:var(--text-dim); margin-top:2px;">RX1 window</div>
+            </div>
+            <div class="batt-param-card">
+              <div class="label">I<sub>RX2</sub> (Receive)</div>
+              <div class="value" style="color: var(--accent);">35.0 mA</div>
+              <div style="font-size:0.65rem; color:var(--text-dim); margin-top:2px;">RX2 window</div>
             </div>
           </div>
         </div>
@@ -1481,7 +1486,7 @@
 
   <footer class="site-footer">
     <div class="footer-disclaimer">
-      Created by Claude Opus 4.6 (1M) in Claude Code. If you find any errors or issues, please talk to Prof. Bell.
+      Created by Claude Opus 4.6 (1M) in Claude Code. If you find any errors or issues, please let Prof. Bell know.
     </div>
     <div class="footer-version">v1 &mdash; April 1, 2026</div>
   </footer>

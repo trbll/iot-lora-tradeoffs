@@ -42,17 +42,15 @@ lora-toy/
 ├── audio/
 │   ├── sf_analogy.mp3  # TTS narration for the SF audio analogy
 │   └── sf_analogy.json # Word-level timestamps for highlight sync
-├── .env                # ElevenLabs API key (not committed)
-├── venv/               # Python venv for TTS generation (not committed)
 └── README.md
 ```
 
 ## Data Sources
 
 - **LoRaWAN Data Rates**: US 902-928 MHz band specification (DR0–DR3 at 125 kHz, DR8–DR13 at 500 kHz)
-- **Air-time vs. Payload**: Adelantado, X. et al., "Understanding the Limits of LoRaWAN," *IEEE Communications Magazine*, Feb. 2017
-- **Current Consumption & Lifecycle States**: Casals, L. et al., "Modeling the Energy Performance of LoRaWAN," *Sensors*, 2017, 17-2364
-- **Transceiver Specs**: Semtech SX1272 datasheet (sleep: 0.045 mA, TX: 83 mA @ 20 dBm, RX: 10.5 mA)
+- **Air-time vs. Payload**: Adelantado, F. et al., ["Understanding the Limits of LoRaWAN,"](https://ieeexplore.ieee.org/document/8030482) *IEEE Communications Magazine*, vol. 55, no. 9, pp. 34-40, Sept. 2017
+- **Current Consumption & Lifecycle States**: Casals, L. et al., ["Modeling the Energy Performance of LoRaWAN,"](https://www.mdpi.com/1424-8220/17/10/2364) *Sensors*, 2017, 17(10), 2364
+- **Hardware Platform**: Multitech MultiConnect mDot with Semtech SX1272 transceiver (sleep: 0.045 mA, TX: 83 mA @ 20 dBm, RX1: 38.1 mA, RX2: 35.0 mA — platform-level measurements from Casals et al.)
 
 ## Battery Life Model
 
@@ -78,3 +76,5 @@ v1 — April 1, 2026
 ## Author
 
 Created by Claude Opus 4.6 (1M) in Claude Code for Prof. Bell's IoT course.
+
+If you find any errors or issues, please let Prof. Bell know.
