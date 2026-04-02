@@ -1,0 +1,2628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IoT LoRa Interactive Explorer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1729;
+    --surface: #1a2340;
+    --surface2: #222e4a;
+    --border: #2d3a5c;
+    --text: #e0e6f0;
+    --text-dim: #8892a8;
+    --accent: #4fc3f7;
+    --accent2: #81c784;
+    --accent3: #ffb74d;
+    --accent4: #e57373;
+    --accent5: #ba68c8;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    background: linear-gradient(135deg, var(--accent), var(--accent5));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
+
+  /* Educational Intro */
+  .edu-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-left: 4px solid var(--accent);
+  }
+
+  .edu-box h2 {
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .edu-box p {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  .edu-box strong { color: var(--text); }
+  .edu-box code {
+    background: var(--surface2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--accent3);
+  }
+
+  /* Tooltips */
+  .has-tooltip {
+    position: relative;
+    cursor: help;
+    border-bottom: 1px dashed var(--accent);
+  }
+
+  .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2a3558;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 16px;
+    width: 300px;
+    font-size: 0.82rem;
+    color: var(--text);
+    line-height: 1.6;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    pointer-events: none;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--accent);
+  }
+
+  .has-tooltip:hover .tooltip,
+  .has-tip:hover .tooltip {
+    display: block;
+  }
+
+  .tooltip strong { color: var(--accent); }
+
+  /* Inline tooltip for terms within body text */
+  .has-tip {
+    position: relative;
+    cursor: help;
+    border-bottom: 1px dashed rgba(79, 195, 247, 0.5);
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .has-tip .tooltip {
+    width: 280px;
+    bottom: calc(100% + 6px);
+  }
+
+  /* Controls */
+  .controls {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .control-group {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .control-group label {
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .sf-display {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .sf-display span {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--surface2);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(79, 195, 247, 0.4);
+  }
+
+  .bw-toggle {
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .bw-toggle button {
+    padding: 8px 20px;
+    border: none;
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .bw-toggle button.active {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+  }
+
+  .sf-range-hint {
+    font-size: 0.75rem;
+    color: var(--accent3);
+    margin-top: 2px;
+    min-height: 1.2em;
+  }
+
+  /* Grid layout */
+  .viz-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 800px) {
+    .viz-grid { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+  }
+
+  .panel h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  canvas {
+    width: 100%;
+    border-radius: 8px;
+    display: block;
+  }
+
+  /* Stats Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    text-align: center;
+    transition: transform 0.15s;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-unit {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+
+  .color-accent { color: var(--accent); }
+  .color-green { color: var(--accent2); }
+  .color-orange { color: var(--accent3); }
+  .color-red { color: var(--accent4); }
+
+  /* Tradeoff Bars */
+  .tradeoff-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .bar-label {
+    width: 80px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 28px;
+    background: var(--surface2);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(0,0,0,0.7);
+    min-width: 40px;
+  }
+
+  .bar-fill.range { background: linear-gradient(90deg, #4fc3f7, #0288d1); }
+  .bar-fill.speed { background: linear-gradient(90deg, #81c784, #388e3c); }
+  .bar-fill.airtime { background: linear-gradient(90deg, #ffb74d, #f57c00); }
+  .bar-fill.payload { background: linear-gradient(90deg, #ba68c8, #7b1fa2); }
+
+  /* DR label */
+  .dr-badge {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    color: var(--accent3);
+    font-weight: 600;
+    margin-left: 16px;
+  }
+
+  /* ===== Panel 2: Transmission Lifecycle ===== */
+  .lifecycle-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-left: 4px solid var(--accent3);
+  }
+
+  .lifecycle-section h2 {
+    font-size: 1.1rem;
+    color: var(--accent3);
+    margin-bottom: 6px;
+  }
+
+  .lifecycle-section > p {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .lifecycle-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .lifecycle-controls button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.2s;
+  }
+
+  .lifecycle-controls button:hover { opacity: 0.85; }
+  .lifecycle-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .lc-play-btn {
+    background: var(--accent3);
+    color: var(--bg);
+  }
+
+  .lc-reset-btn {
+    background: var(--surface2);
+    color: var(--text-dim);
+    border: 1px solid var(--border) !important;
+  }
+
+  .lc-speed {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .lc-speed select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.8rem;
+  }
+
+  .lc-params {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-left: 8px;
+    padding-left: 14px;
+    border-left: 1px solid var(--border);
+  }
+
+  .lc-param-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.2s;
+  }
+
+  /* Timeline bar */
+  .lc-timeline {
+    position: relative;
+    margin-bottom: 8px;
+  }
+
+  .lc-phases {
+    display: flex;
+    height: 40px;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .lc-phase {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(0,0,0,0.7);
+    transition: opacity 0.2s;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  .lc-phase.dim { opacity: 0.3; }
+  .lc-phase.active {
+    opacity: 1;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.4);
+  }
+
+  .lc-phase-label {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  /* Current draw graph */
+  .lc-graph-container {
+    position: relative;
+    margin-top: 28px;
+  }
+
+  .lc-graph-container canvas {
+    width: 100%;
+    height: 180px;
+  }
+
+  /* State info card */
+  .lc-state-info {
+    display: flex;
+    gap: 20px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .lc-state-card {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 16px;
+    flex: 1;
+    min-width: 140px;
+    text-align: center;
+  }
+
+  .lc-state-card .label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .lc-state-card .value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+  }
+
+  .lc-total-energy {
+    margin-top: 12px;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .lc-total-energy .label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .lc-total-energy .value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent3);
+  }
+
+  /* ===== SF Audio Analogy ===== */
+  .analogy-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-left: 4px solid var(--accent5);
+  }
+
+  .analogy-section h2 {
+    font-size: 1.1rem;
+    color: var(--accent5);
+    margin-bottom: 8px;
+  }
+
+  .analogy-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .analogy-play-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    background: var(--accent5);
+    color: var(--bg);
+    transition: opacity 0.2s;
+  }
+
+  .analogy-play-btn:hover { opacity: 0.85; }
+  .analogy-play-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .analogy-sf-btns {
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .analogy-sf-btns button {
+    padding: 6px 14px;
+    border: none;
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    font-weight: 600;
+  }
+
+  .analogy-sf-btns button.active {
+    background: var(--accent5);
+    color: var(--bg);
+  }
+
+  .analogy-speed-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-left: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .analogy-speed-label strong {
+    color: var(--accent3);
+  }
+
+  .analogy-text {
+    font-size: 0.95rem;
+    line-height: 2;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    padding: 14px 18px;
+    background: var(--surface2);
+    border-radius: 8px;
+  }
+
+  .analogy-text .aword {
+    transition: color 0.1s, background 0.1s;
+    padding: 2px 1px;
+    border-radius: 3px;
+  }
+
+  .analogy-text .aword.active {
+    color: var(--accent5);
+    background: rgba(186, 104, 200, 0.15);
+    font-weight: 600;
+  }
+
+  .analogy-text .aword.read {
+    color: var(--text);
+  }
+
+  .analogy-progress {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .analogy-progress-fill {
+    height: 100%;
+    background: var(--accent5);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.05s linear;
+  }
+
+  .analogy-note {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* ===== Power Comparison Panel ===== */
+  .power-compare {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-top: 16px;
+  }
+
+  .power-compare h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .power-compare .subtitle {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .power-compare .subtitle strong { color: var(--text); }
+
+  .pwr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 800px) {
+    .pwr-grid { grid-template-columns: 1fr; }
+  }
+
+  .pwr-col h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .pwr-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pwr-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pwr-bar-label {
+    width: 70px;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .pwr-bar-track {
+    flex: 1;
+    height: 22px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .pwr-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease-out;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    min-width: 2px;
+  }
+
+  .pwr-bar-value {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+    width: 70px;
+    text-align: left;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pwr-ratio-callout {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .pwr-ratio-callout .big-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent4);
+    line-height: 1;
+  }
+
+  .pwr-ratio-callout .big-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .pwr-log-note {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 10px;
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* ===== Panel 3: Battery Life Calculator ===== */
+  .battery-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-left: 4px solid var(--accent2);
+  }
+
+  .battery-section h2 {
+    font-size: 1.1rem;
+    color: var(--accent2);
+    margin-bottom: 6px;
+  }
+
+  .battery-section > p {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .batt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 800px) {
+    .batt-grid { grid-template-columns: 1fr; }
+  }
+
+  .batt-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .batt-input-group label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .batt-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .batt-input-row input[type="range"] {
+    flex: 1;
+  }
+
+  .batt-input-val {
+    min-width: 80px;
+    text-align: right;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .batt-presets {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+
+  .batt-presets button {
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .batt-presets button:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  /* Result display */
+  .batt-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .batt-icon {
+    position: relative;
+    width: 80px;
+    height: 140px;
+    border: 3px solid var(--accent2);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .batt-icon::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 8px;
+    background: var(--accent2);
+    border-radius: 3px 3px 0 0;
+  }
+
+  .batt-fill-level {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--accent2);
+    transition: height 0.6s ease-out, background 0.4s;
+    opacity: 0.3;
+  }
+
+  .batt-life-number {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: var(--accent2);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .batt-life-unit {
+    font-size: 1rem;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  .batt-life-detail {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  /* Duty cycle canvas */
+  .batt-duty-container {
+    margin-top: 16px;
+  }
+
+  .batt-duty-container h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .batt-duty-container canvas {
+    width: 100%;
+    height: 200px;
+  }
+
+  /* Formula display */
+  .batt-formula {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  .batt-formula .val { color: var(--accent2); font-weight: 700; }
+  .batt-formula .op { color: var(--text-dim); }
+  .batt-formula .result { color: var(--accent3); font-weight: 700; font-size: 1rem; }
+
+  .batt-insight {
+    margin-top: 14px;
+    padding: 14px 18px;
+    background: rgba(79, 195, 247, 0.08);
+    border: 1px solid rgba(79, 195, 247, 0.2);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  .batt-insight strong { color: var(--text); }
+  .batt-insight .val { color: var(--accent3); font-weight: 600; }
+  .batt-insight .good { color: var(--accent2); font-weight: 600; }
+  .batt-insight .bad { color: var(--accent4); font-weight: 600; }
+
+  .batt-params-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .batt-param-card {
+    flex: 1;
+    min-width: 120px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+
+  .batt-param-card .label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .batt-param-card .value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+  }
+
+  /* Footer */
+  .site-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0 8px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .footer-disclaimer {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .footer-version {
+    font-size: 0.7rem;
+    color: rgba(136,146,168,0.5);
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>IoT LoRa Spreading Factor Explorer</h1>
+    <p>Interactive visualization of LoRaWAN tradeoffs &mdash; US 902&ndash;928 MHz Band</p>
+  </header>
+
+  <div class="edu-box">
+    <h2>What is Spreading Factor?</h2>
+    <p>
+      LoRa sends data using
+      <span class="has-tip">chirps<span class="tooltip">A <strong>chirp</strong> is a signal whose frequency sweeps smoothly from low to high (or high to low) over a fixed time. Think of a bird chirp rising in pitch &mdash; same idea, just in radio waves.</span></span>
+      &mdash; radio signals that sweep up in frequency. The
+      <span class="has-tip">Spreading Factor<span class="tooltip"><strong>Spreading Factor (SF7&ndash;SF12)</strong> sets how many chirps are used to send each piece of data. More chirps = slower but tougher signal. SF7 uses 128 chirps per symbol, SF12 uses 4,096.</span></span>
+      controls how much each chirp is "spread out" in time.
+      A higher SF stretches each transmission longer, which makes it
+      <span class="has-tip"><strong>harder to lose in noise</strong><span class="tooltip">More chirps per symbol means more redundancy. The receiver can average over a longer pattern, filtering out random noise. This is called <strong>processing gain</strong> &mdash; each extra SF step adds ~2.5 dB of sensitivity.</span></span> and
+      <span class="has-tip"><strong>receivable at greater distances</strong><span class="tooltip">The radio waves don't actually travel farther &mdash; higher SF gives more <strong>processing gain</strong>, meaning the receiver can decode a much weaker signal. The range increase comes from better sensitivity, not stronger transmission.</span></span>,
+      but sends data <span class="has-tip"><strong>more slowly</strong><span class="tooltip">At SF7 you get ~5,470 bits/sec. At SF12 it drops to ~250 bits/sec &mdash; roughly <strong>22&times; slower</strong>. Each SF step roughly halves the data rate because each symbol takes twice as long.</span></span> and keeps the radio on longer (more
+      <span class="has-tip">time on air<span class="tooltip"><strong>Time on Air</strong> is literally how long the radio waves are being transmitted for a single message. Longer time on air = more battery drain and more spectrum usage.</span></span>).
+      Each step up in SF roughly <span class="has-tip"><strong>doubles the time on air</strong><span class="tooltip">Because each SF adds one bit to the symbol, the symbol length doubles (2^SF). SF7 symbol = 1.02 ms, SF8 = 2.05 ms, SF9 = 4.10 ms, and so on. A 10-byte message takes ~39 ms at SF7 but ~991 ms at SF12.</span></span>.
+      The formula is <code>T_sym = 2^SF /
+      <span class="has-tip" style="border-bottom-color: rgba(255,183,77,0.5);">BW<span class="tooltip"><strong>Bandwidth (BW)</strong> is how wide the frequency range is that the chirp sweeps across. Wider = faster but shorter range. Common values: 125 kHz and 500 kHz.</span></span></code>.
+    </p>
+  </div>
+
+  <!-- SF Audio Analogy -->
+  <div class="analogy-section">
+    <h2>Hear the Spreading Factor</h2>
+    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 14px;">
+      Pick a spreading factor and listen to the <strong style="color:var(--text)">same message</strong> at different speeds.
+      At <strong style="color:var(--text)">SF7</strong> it plays fast &mdash; like someone talking quickly in a noisy room, easy to miss.
+      At <strong style="color:var(--text)">SF12</strong> it's stretched <strong style="color:var(--text)">32&times; slower</strong> &mdash;
+      like that same person repeating themselves very deliberately, giving your ears much more time to catch every word.
+      The content is identical; only the delivery speed changes.
+    </p>
+
+    <div class="analogy-controls">
+      <button class="analogy-play-btn" id="analogy-play" onclick="analogyPlay()">Play</button>
+      <div class="analogy-sf-btns" id="analogy-sf-btns">
+        <button class="active" onclick="setAnalogySF(7)">SF7</button>
+        <button onclick="setAnalogySF(8)">SF8</button>
+        <button onclick="setAnalogySF(9)">SF9</button>
+        <button onclick="setAnalogySF(10)">SF10</button>
+        <button onclick="setAnalogySF(11)">SF11</button>
+        <button onclick="setAnalogySF(12)">SF12</button>
+      </div>
+      <div class="analogy-speed-label">Playback: <strong id="analogy-speed-val">1.0x</strong></div>
+    </div>
+
+    <div class="analogy-text" id="analogy-text"></div>
+    <div class="analogy-progress">
+      <div class="analogy-progress-fill" id="analogy-progress-fill"></div>
+    </div>
+    <p class="analogy-note">
+      SF7 = 1.0&times; speed (normal). Each SF step halves the speed: SF8 = 0.5&times;, SF9 = 0.25&times;, &hellip; SF12 = 0.03125&times;.
+      The audio content is identical &mdash; only the "time on air" changes.
+    </p>
+  </div>
+
+  <div class="controls">
+    <div class="control-group" style="flex: 2;">
+      <label class="has-tooltip">
+        Spreading Factor
+        <div class="tooltip">
+          <strong>Spreading Factor (SF)</strong> determines how many chirps encode each bit of data.
+          SF7 uses 128 chirps per symbol (2^7), SF12 uses 4096 (2^12).
+          More chirps = more redundancy = better noise immunity and range, but each symbol takes longer to transmit, reducing data rate.
+          Signals at different SFs are orthogonal &mdash; they don't interfere with each other, allowing multiple simultaneous transmissions.
+        </div>
+      </label>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="sf-display">SF<span id="sf-value">7</span></div>
+        <div id="dr-badge" class="dr-badge">DR3</div>
+      </div>
+      <input type="range" id="sf-slider" min="7" max="12" value="7" step="1">
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">
+        <span id="sf-min-label">SF7 &mdash; Fast, Short Range</span>
+        <span id="sf-max-label">SF12 &mdash; Slow, Long Range</span>
+      </div>
+      <div class="sf-range-hint" id="sf-range-hint">US 902 MHz / 125 kHz: SF7&ndash;SF10 (DR0&ndash;DR3), SF11&ndash;SF12 (no US DR assignment)</div>
+    </div>
+    <div class="control-group">
+      <label class="has-tooltip">
+        Bandwidth
+        <div class="tooltip">
+          <strong>Bandwidth (BW)</strong> is the width of the frequency range the chirp sweeps across.
+          Wider bandwidth (500 kHz) allows faster chirps and higher data rates, but requires more power and has shorter range.
+          Narrower bandwidth (125 kHz) is slower but more sensitive, enabling longer-range communication.
+          In the US band, 125 kHz is used for uplink (SF7&ndash;SF10) and 500 kHz for downlink and additional data rates (SF7&ndash;SF12).
+        </div>
+      </label>
+      <div class="bw-toggle">
+        <button id="bw-125" class="active" onclick="setBW(125)">125 kHz</button>
+        <button id="bw-500" onclick="setBW(500)">500 kHz</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="viz-grid">
+    <div class="panel">
+      <h3>Chirp Waveform</h3>
+      <canvas id="chirp-canvas" height="220"></canvas>
+    </div>
+
+    <div class="panel">
+      <h3>Relative Range</h3>
+      <canvas id="range-canvas" height="220"></canvas>
+    </div>
+
+    <div class="panel">
+      <h3>Current Parameters</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value color-accent" id="stat-bitrate">5,470</div>
+          <div class="stat-label">Bit Rate <span class="stat-unit">bps</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value color-green" id="stat-payload">250</div>
+          <div class="stat-label">Max Payload <span class="stat-unit">bytes</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value color-orange" id="stat-toa">39</div>
+          <div class="stat-label">Time on Air <span class="stat-unit">ms (10B)</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value color-red" id="stat-symbol">0.98</div>
+          <div class="stat-label">Symbol Time <span class="stat-unit">ms</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Tradeoff Overview</h3>
+      <div class="tradeoff-bars">
+        <div class="bar-row">
+          <div class="bar-label">Range</div>
+          <div class="bar-track">
+            <div class="bar-fill range" id="bar-range" style="width: 20%"></div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Speed</div>
+          <div class="bar-track">
+            <div class="bar-fill speed" id="bar-speed" style="width: 80%"></div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Air Time</div>
+          <div class="bar-track">
+            <div class="bar-fill airtime" id="bar-airtime" style="width: 10%"></div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Payload</div>
+          <div class="bar-track">
+            <div class="bar-fill payload" id="bar-payload" style="width: 90%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel 2: Transmission Lifecycle -->
+  <div class="lifecycle-section">
+    <h2>Transmission Lifecycle</h2>
+    <p>
+      Every LoRaWAN uplink goes through <span class="has-tip"><strong>11 states</strong><span class="tooltip">Wake up, radio prep, transmit, wait for RX1, listen on RX1, wait for RX2, listen on RX2, radio off, post-processing, shutdown sequence, and sleep. Each state draws a different amount of current.</span></span> &mdash; from waking the radio to returning to sleep.
+      Most of the energy is spent during the brief <span class="has-tip"><strong>TX burst</strong><span class="tooltip">The <strong>transmit phase</strong> is when the radio is actively sending your data over the air. It draws the most current (~83 mA) and its duration depends directly on your SF and payload size.</span></span> and the two <span class="has-tip"><strong>receive windows</strong><span class="tooltip"><strong>RX1</strong> opens 1 second after TX ends, <strong>RX2</strong> opens 1 second after RX1. The device briefly listens for a downlink response from the gateway (e.g., an ACK or configuration change). If nothing is heard, the windows close and the device goes back to sleep.</span></span> (RX1 &amp; RX2)
+      where the device listens for a downlink from the gateway.
+      The current-draw graph below shows the power profile of a single transmission cycle.
+      Higher SF = longer TX phase = more energy per message.
+    </p>
+
+    <div class="lifecycle-controls">
+      <button class="lc-play-btn" id="lc-play" onclick="lcPlay()">Play</button>
+      <button class="lc-reset-btn" id="lc-reset" onclick="lcReset()">Reset</button>
+      <div class="lc-speed">
+        <span>Speed:</span>
+        <select id="lc-speed-select">
+          <option value="0.5">0.5x</option>
+          <option value="1" selected>1x</option>
+          <option value="2">2x</option>
+          <option value="4">4x</option>
+        </select>
+      </div>
+      <div class="lc-params" id="lc-params">
+        <span class="lc-param-chip" id="lc-param-sf">SF7</span>
+        <span class="lc-param-chip" id="lc-param-bw">125 kHz</span>
+        <span class="lc-param-chip" id="lc-param-dr">DR3</span>
+        <span class="lc-param-chip" id="lc-param-bitrate">5,470 bps</span>
+      </div>
+    </div>
+
+    <div class="lc-timeline">
+      <div class="lc-phases" id="lc-phases"></div>
+    </div>
+
+    <div class="lc-graph-container">
+      <canvas id="lc-canvas" height="180"></canvas>
+    </div>
+
+    <div class="lc-state-info">
+      <div class="lc-state-card">
+        <div class="label">Current State</div>
+        <div class="value color-accent" id="lc-state-name">Idle</div>
+      </div>
+      <div class="lc-state-card">
+        <div class="label">Current Draw</div>
+        <div class="value color-orange" id="lc-current-draw">0 mA</div>
+      </div>
+      <div class="lc-state-card">
+        <div class="label">Duration</div>
+        <div class="value color-green" id="lc-duration">-- ms</div>
+      </div>
+      <div class="lc-state-card">
+        <div class="label">Elapsed</div>
+        <div class="value" style="color: var(--text);" id="lc-elapsed">0 ms</div>
+      </div>
+    </div>
+
+    <div class="lc-total-energy">
+      <div>
+        <span class="label">Total cycle time: </span>
+        <span class="value" id="lc-total-time">--</span>
+      </div>
+      <div>
+        <span class="label">Total charge: </span>
+        <span class="value" id="lc-total-charge">--</span>
+      </div>
+      <div>
+        <span class="label">Avg. current: </span>
+        <span class="value" id="lc-avg-current">--</span>
+      </div>
+    </div>
+
+    <!-- Power Comparison Sub-panel -->
+    <div class="power-compare">
+      <h3>Sleep vs. Active Power Draw</h3>
+      <p class="subtitle">
+        LoRa devices spend <span class="has-tip"><strong>99%+ of their time sleeping</strong><span class="tooltip">A device transmitting once per hour with SF7 is active for only ~2 seconds out of 3,600. That's a duty cycle of ~0.05%. The rest of the time the radio is off, drawing almost no power.</span></span>.
+        The difference between sleep current and transmit current spans
+        <span class="has-tip"><strong>orders of magnitude</strong><span class="tooltip">Sleep current is ~0.045 mA (45 microamps). Transmit current is ~83 mA. That's a ratio of roughly <strong>1,844&times;</strong> &mdash; almost four orders of magnitude. This enormous gap is what makes multi-year battery life possible.</span></span> &mdash; this is why LoRa devices can run for years on a coin cell.
+        Based on Semtech SX1272 transceiver data.
+      </p>
+
+      <div class="pwr-grid">
+        <div class="pwr-col">
+          <h4>Current Draw by State (linear scale)</h4>
+          <div class="pwr-bars" id="pwr-bars-linear"></div>
+        </div>
+        <div class="pwr-col">
+          <h4>Current Draw by State (log scale)</h4>
+          <div class="pwr-bars" id="pwr-bars-log"></div>
+        </div>
+      </div>
+
+      <div class="pwr-ratio-callout">
+        <div class="big-number" id="pwr-ratio">1,844x</div>
+        <div class="big-label">TX draws <span id="pwr-ratio-label">1,844</span>&times; more current than Sleep</div>
+      </div>
+
+      <p class="pwr-log-note">
+        The linear scale makes sleep current invisible &mdash; that's the point.
+        The log scale reveals it. Both views tell the story of why duty cycle matters so much.
+      </p>
+    </div>
+  </div>
+
+  <!-- Panel 3: Battery Life Calculator -->
+  <div class="battery-section">
+    <h2>Battery Life Calculator</h2>
+    <p>
+      How long will your device last on a battery? It depends on the
+      <span class="has-tip">duty cycle<span class="tooltip"><strong>Duty Cycle (D)</strong> is the fraction of time the device is actively transmitting vs. sleeping. D = Active Time / (Active Time + Sleep Time). A device transmitting once per hour has a very low duty cycle.</span></span>
+       &mdash; the ratio of active time to sleep time. Since sleep current is ~2000&times; lower than transmit current,
+      <span class="has-tip"><strong>how often</strong> you send<span class="tooltip">Sending every 1 minute vs. every 60 minutes is a 60&times; difference in battery life. The transmit interval is the single biggest lever for extending device lifetime.</span></span> matters far more than <span class="has-tip"><strong>how much</strong> you send<span class="tooltip">Say your device sends 10 bytes at SF7 &mdash; that's ~39 ms of TX time. Doubling to 20 bytes might add only ~20 ms more. But going from sending every 60 minutes to every 30 minutes <strong>doubles the number of full TX cycles</strong> (wake, prep, TX, RX windows, sleep) &mdash; each costing ~2 seconds of active time. The overhead of waking the radio dominates the cost of the actual payload.</span></span>.
+    </p>
+
+    <div class="batt-grid">
+      <div class="batt-inputs">
+        <div class="batt-input-group">
+          <label>Battery Capacity</label>
+          <div class="batt-input-row">
+            <input type="range" id="batt-capacity" min="100" max="10000" value="2400" step="100">
+            <div class="batt-input-val" id="batt-capacity-val">2,400 mAh</div>
+          </div>
+          <div class="batt-presets">
+            <button onclick="setBattCapacity(225)">Coin Cell CR2032 (225 mAh)</button>
+            <button onclick="setBattCapacity(1200)">AAA Battery (1200 mAh)</button>
+            <button onclick="setBattCapacity(2400)">AA Battery (2400 mAh)</button>
+            <button onclick="setBattCapacity(6000)">D Cell Battery (6000 mAh)</button>
+          </div>
+        </div>
+
+        <div class="batt-input-group">
+          <label>Transmit Interval (how often the device sends)</label>
+          <div class="batt-input-row">
+            <input type="range" id="batt-interval" min="1" max="1440" value="60" step="1">
+            <div class="batt-input-val" id="batt-interval-val">60 min</div>
+          </div>
+          <div class="batt-presets">
+            <button onclick="setBattInterval(1)">1 min</button>
+            <button onclick="setBattInterval(15)">15 min</button>
+            <button onclick="setBattInterval(60)">1 hour</button>
+            <button onclick="setBattInterval(720)">12 hours</button>
+          </div>
+        </div>
+
+        <div class="batt-input-group">
+          <label>Derived from SF &amp; BW (Panel 1) and lifecycle (Panel 2)</label>
+          <div class="batt-params-row">
+            <div class="batt-param-card">
+              <div class="label">SF</div>
+              <div class="value color-accent" id="batt-sf">7</div>
+            </div>
+            <div class="batt-param-card">
+              <div class="label">Active Time</div>
+              <div class="value color-orange" id="batt-active-time">-- ms</div>
+            </div>
+            <div class="batt-param-card">
+              <div class="label">Avg Active I</div>
+              <div class="value color-orange" id="batt-avg-active">-- mA</div>
+            </div>
+            <div class="batt-param-card">
+              <div class="label">Duty Cycle (D)</div>
+              <div class="value color-red" id="batt-duty-cycle">--%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="batt-input-group">
+          <label>Model Constants (Semtech SX1272)</label>
+          <div class="batt-params-row">
+            <div class="batt-param-card">
+              <div class="label">I<sub>S</sub> (Sleep)</div>
+              <div class="value" style="color: var(--text-dim);">0.045 mA</div>
+              <div style="font-size:0.65rem; color:var(--text-dim); margin-top:2px;">= 45 &micro;A</div>
+            </div>
+            <div class="batt-param-card">
+              <div class="label">I<sub>TX</sub> (Transmit)</div>
+              <div class="value" style="color: var(--accent4);">83 mA</div>
+              <div style="font-size:0.65rem; color:var(--text-dim); margin-top:2px;">@ 20 dBm</div>
+            </div>
+            <div class="batt-param-card">
+              <div class="label">I<sub>RX</sub> (Receive)</div>
+              <div class="value" style="color: var(--accent);">10.5 mA</div>
+              <div style="font-size:0.65rem; color:var(--text-dim); margin-top:2px;">RX window</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="batt-result">
+        <div class="batt-icon">
+          <div class="batt-fill-level" id="batt-fill-level" style="height: 80%;"></div>
+        </div>
+        <div class="batt-life-number" id="batt-life-number">--</div>
+        <div class="batt-life-unit" id="batt-life-unit">years</div>
+        <div class="batt-life-detail" id="batt-life-detail"></div>
+      </div>
+    </div>
+
+    <div class="batt-duty-container">
+      <h3>Duty Cycle Waveform</h3>
+      <canvas id="batt-duty-canvas" height="200"></canvas>
+    </div>
+
+    <div class="batt-formula" id="batt-duty-formula">
+      D = A / (A + S)
+    </div>
+    <div class="batt-formula" id="batt-formula">
+      L = B / (D &times; I<sub>A</sub> + (1 &minus; D) &times; I<sub>S</sub>)
+    </div>
+
+    <div class="batt-insight" id="batt-insight"></div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-disclaimer">
+      Created by Claude Opus 4.6 (1M) in Claude Code. If you find any errors or issues, please talk to Prof. Bell.
+    </div>
+    <div class="footer-version">v1 &mdash; April 1, 2026</div>
+  </footer>
+</div>
+
+<script>
+// ===== DATA =====
+// US 902-928 MHz band: 125 kHz only supports SF7-SF10 (DR0-DR3)
+// 500 kHz supports SF7-SF12 (DR8-DR13)
+const DATA = {
+  125: {
+    7:  { dr: 'DR3', bitrate: 5470,  payload: 250, toaMs: 39,   rangePct: 30 },
+    8:  { dr: 'DR2', bitrate: 3125,  payload: 133, toaMs: 72,   rangePct: 42 },
+    9:  { dr: 'DR1', bitrate: 1760,  payload: 61,  toaMs: 144,  rangePct: 56 },
+    10: { dr: 'DR0', bitrate: 980,   payload: 19,  toaMs: 289,  rangePct: 72 },
+    11: { dr: null,  bitrate: 440,   payload: 11,  toaMs: 577,  rangePct: 86 },
+    12: { dr: null,  bitrate: 250,   payload: 11,  toaMs: 991,  rangePct: 100 },
+  },
+  500: {
+    7:  { dr: 'DR13', bitrate: 21900, payload: 230, toaMs: 10,  rangePct: 15 },
+    8:  { dr: 'DR12', bitrate: 12500, payload: 230, toaMs: 18,  rangePct: 22 },
+    9:  { dr: 'DR11', bitrate: 7000,  payload: 230, toaMs: 36,  rangePct: 30 },
+    10: { dr: 'DR10', bitrate: 3900,  payload: 230, toaMs: 72,  rangePct: 40 },
+    11: { dr: 'DR9',  bitrate: 1760,  payload: 117, toaMs: 144, rangePct: 52 },
+    12: { dr: 'DR8',  bitrate: 980,   payload: 41,  toaMs: 289, rangePct: 65 },
+  }
+};
+
+const SF_RANGES = { 125: { min: 7, max: 12 }, 500: { min: 7, max: 12 } };
+
+// Max values for normalization (across both BWs)
+const MAX_BITRATE = 21900;
+const MAX_PAYLOAD = 250;
+const MAX_TOA = 289; // max within any single BW config
+
+let currentSF = 7;
+let currentBW = 125;
+
+
+// ===== CONTROLS =====
+const sfSlider = document.getElementById('sf-slider');
+sfSlider.addEventListener('input', (e) => {
+  currentSF = parseInt(e.target.value);
+  update();
+});
+
+function setBW(bw) {
+  currentBW = bw;
+  document.getElementById('bw-125').classList.toggle('active', bw === 125);
+  document.getElementById('bw-500').classList.toggle('active', bw === 500);
+
+  // Update slider range
+  const range = SF_RANGES[bw];
+  sfSlider.min = range.min;
+  sfSlider.max = range.max;
+
+  // Clamp current SF to valid range
+  if (currentSF < range.min) currentSF = range.min;
+  if (currentSF > range.max) currentSF = range.max;
+  sfSlider.value = currentSF;
+
+  // Update labels
+  document.getElementById('sf-min-label').textContent = `SF${range.min} \u2014 Fast, Short Range`;
+  document.getElementById('sf-max-label').textContent = `SF${range.max} \u2014 Slow, Long Range`;
+
+  if (bw === 125) {
+    document.getElementById('sf-range-hint').innerHTML = 'US 902 MHz / 125 kHz: SF7&ndash;SF10 (DR0&ndash;DR3), SF11&ndash;SF12 (no US DR assignment)';
+  } else {
+    document.getElementById('sf-range-hint').innerHTML = 'US 902 MHz / 500 kHz: SF7&ndash;SF12 (DR8&ndash;DR13)';
+  }
+
+  update();
+}
+
+// ===== UPDATE =====
+function update() {
+  const d = DATA[currentBW][currentSF];
+  const symbolTime = Math.pow(2, currentSF) / (currentBW * 1000) * 1000; // ms
+
+  // SF display
+  document.getElementById('sf-value').textContent = currentSF;
+
+  // DR badge
+  const drBadge = document.getElementById('dr-badge');
+  if (d.dr) {
+    drBadge.textContent = d.dr;
+    drBadge.style.opacity = '1';
+  } else {
+    drBadge.textContent = 'No US DR';
+    drBadge.style.opacity = '0.4';
+  }
+
+  // Stats
+  animateStat('stat-bitrate', d.bitrate, v => v.toLocaleString());
+  animateStat('stat-payload', d.payload, v => v.toString());
+  animateStat('stat-toa', d.toaMs, v => v.toLocaleString());
+  document.getElementById('stat-symbol').textContent = symbolTime.toFixed(2);
+
+  // Tradeoff bars
+  document.getElementById('bar-range').style.width = d.rangePct + '%';
+  document.getElementById('bar-speed').style.width = (d.bitrate / MAX_BITRATE * 100) + '%';
+  document.getElementById('bar-airtime').style.width = Math.min(100, d.toaMs / MAX_TOA * 100) + '%';
+  document.getElementById('bar-payload').style.width = (d.payload / MAX_PAYLOAD * 100) + '%';
+
+  drawChirp();
+  drawRange();
+}
+
+function animateStat(id, target, fmt) {
+  const el = document.getElementById(id);
+  const current = parseFloat(el.textContent.replace(/,/g, ''));
+  if (Math.abs(current - target) < 0.5) { el.textContent = fmt(target); return; }
+
+  const steps = 12;
+  let step = 0;
+  const diff = target - current;
+  function tick() {
+    step++;
+    const val = current + diff * (step / steps);
+    el.textContent = fmt(Math.round(val));
+    if (step < steps) requestAnimationFrame(tick);
+    else el.textContent = fmt(target);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ===== CHIRP CANVAS =====
+const chirpCanvas = document.getElementById('chirp-canvas');
+const chirpCtx = chirpCanvas.getContext('2d');
+let chirpAnim = 0;
+
+function resizeCanvas(canvas) {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  canvas.getContext('2d').scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+
+function drawChirp() {
+  const canvas = chirpCanvas;
+  const ctx = chirpCtx;
+  resizeCanvas(canvas);
+
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Background grid
+  ctx.strokeStyle = 'rgba(45, 58, 92, 0.5)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < h; y += 30) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  // How much of the canvas width one symbol takes
+  const symbolFraction = Math.pow(2, currentSF - 7) / Math.pow(2, 5);
+  const symbolWidth = Math.max(40, symbolFraction * w * 0.85);
+  const numSymbols = Math.floor(w / symbolWidth);
+
+  const amplitude = h * 0.35;
+  const centerY = h / 2;
+
+  for (let s = 0; s < Math.max(numSymbols, 1); s++) {
+    const startX = s * symbolWidth;
+    if (startX > w) break;
+
+    const grad = ctx.createLinearGradient(startX, 0, startX + symbolWidth, 0);
+    grad.addColorStop(0, 'rgba(79, 195, 247, 0.9)');
+    grad.addColorStop(1, 'rgba(186, 104, 200, 0.9)');
+
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    const points = 200;
+    for (let i = 0; i <= points; i++) {
+      const t = i / points;
+      const x = startX + t * symbolWidth;
+      if (x > w) break;
+
+      const sweepRate = 4 + (currentSF - 7) * 1.5;
+      const phase = 2 * Math.PI * (2 * t + 0.5 * sweepRate * t * t) + chirpAnim;
+      const y = centerY + Math.sin(phase) * amplitude * (0.6 + 0.4 * Math.sin(Math.PI * t));
+
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    if (s > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(startX, 10);
+      ctx.lineTo(startX, h - 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // Label
+  const symbolTimeMs = Math.pow(2, currentSF) / (currentBW * 1000) * 1000;
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '12px Inter, sans-serif';
+  ctx.fillText(`T_sym = ${symbolTimeMs.toFixed(2)} ms`, 10, h - 10);
+
+  // Symbol width bracket
+  if (symbolWidth > 60) {
+    const bY = 16;
+    ctx.strokeStyle = 'rgba(255,183,77,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, bY); ctx.lineTo(0, bY - 8);
+    ctx.moveTo(0, bY); ctx.lineTo(symbolWidth, bY);
+    ctx.moveTo(symbolWidth, bY); ctx.lineTo(symbolWidth, bY - 8);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,183,77,0.9)';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('1 symbol', symbolWidth / 2, bY + 14);
+    ctx.textAlign = 'left';
+  }
+}
+
+function animateChirp() {
+  chirpAnim += 0.06;
+  drawChirp();
+  requestAnimationFrame(animateChirp);
+}
+
+// ===== RANGE CANVAS =====
+const rangeCanvas = document.getElementById('range-canvas');
+const rangeCtx = rangeCanvas.getContext('2d');
+
+function drawRange() {
+  const canvas = rangeCanvas;
+  const ctx = rangeCtx;
+  resizeCanvas(canvas);
+
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+  const cx = w / 2;
+  const cy = h / 2 + 10;
+  const maxR = Math.min(w, h) * 0.42;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const d = DATA[currentBW][currentSF];
+  const rangeKm = { 7: 2, 8: 3.5, 9: 5, 10: 7, 11: 9, 12: 12 };
+
+  // Draw all SF rings for current BW
+  const range = SF_RANGES[currentBW];
+  for (let sf = range.max; sf >= range.min; sf--) {
+    const pct = DATA[currentBW][sf].rangePct / 100;
+    const r = pct * maxR;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = sf === currentSF
+      ? 'rgba(79, 195, 247, 0.15)'
+      : 'rgba(45, 58, 92, 0.3)';
+    ctx.fill();
+
+    ctx.strokeStyle = sf === currentSF
+      ? 'rgba(79, 195, 247, 0.8)'
+      : 'rgba(45, 58, 92, 0.6)';
+    ctx.lineWidth = sf === currentSF ? 2.5 : 1;
+    ctx.stroke();
+
+    ctx.fillStyle = sf === currentSF ? 'rgba(79,195,247,0.9)' : 'rgba(136,146,168,0.5)';
+    ctx.font = sf === currentSF ? 'bold 11px Inter, sans-serif' : '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`SF${sf}`, cx, cy - r + 14);
+  }
+
+  // Gateway
+  ctx.fillStyle = 'rgba(255,183,77,0.9)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,183,77,0.7)';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Gateway', cx, cy + 20);
+
+  // Active range
+  const activeR = (d.rangePct / 100) * maxR;
+  ctx.fillStyle = 'rgba(79,195,247,0.9)';
+  ctx.font = 'bold 12px Inter, sans-serif';
+  ctx.fillText(`~${rangeKm[currentSF]} km`, cx + activeR - 20, cy + 4);
+
+  // Sensor node
+  const angle = -Math.PI / 4;
+  const nodeX = cx + Math.cos(angle) * activeR;
+  const nodeY = cy + Math.sin(angle) * activeR;
+
+  ctx.strokeStyle = 'rgba(79,195,247,0.3)';
+  ctx.lineWidth = 1.5;
+  for (let i = 1; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.arc(nodeX, nodeY, i * 8, angle + Math.PI - 0.5, angle + Math.PI + 0.5);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = 'rgba(129, 199, 132, 0.9)';
+  ctx.beginPath();
+  ctx.arc(nodeX, nodeY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(129, 199, 132, 0.7)';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.fillText('Sensor', nodeX + 10, nodeY - 10);
+}
+
+
+
+// ===== SF AUDIO ANALOGY =====
+const analogyTimestamps = {"words":[{"word":"An","start":0.0,"end":0.163},{"word":"analogy:","start":0.209,"end":0.894},{"word":"imagine","start":1.231,"end":1.649},{"word":"trying","start":1.683,"end":1.881},{"word":"to","start":1.916,"end":1.962},{"word":"hear","start":2.009,"end":2.159},{"word":"someone","start":2.229,"end":2.519},{"word":"whisper","start":2.554,"end":2.868},{"word":"in","start":2.914,"end":2.961},{"word":"a","start":3.007,"end":3.03},{"word":"noisy","start":3.077,"end":3.344},{"word":"room.","start":3.402,"end":3.796},{"word":"If","start":4.087,"end":4.203},{"word":"they","start":4.238,"end":4.342},{"word":"say","start":4.389,"end":4.54},{"word":"one","start":4.61,"end":4.761},{"word":"quick","start":4.807,"end":4.993},{"word":"word,","start":5.039,"end":5.26},{"word":"you","start":5.283,"end":5.353},{"word":"might","start":5.399,"end":5.55},{"word":"miss","start":5.585,"end":5.782},{"word":"it.","start":5.852,"end":6.096},{"word":"If","start":6.351,"end":6.479},{"word":"they","start":6.514,"end":6.63},{"word":"stretch","start":6.688,"end":6.99},{"word":"that","start":7.059,"end":7.199},{"word":"same","start":7.315,"end":7.64},{"word":"word","start":7.686,"end":7.907},{"word":"out","start":7.965,"end":8.093},{"word":"over","start":8.139,"end":8.302},{"word":"32","start":8.395,"end":8.871},{"word":"times","start":8.929,"end":9.207},{"word":"longer,","start":9.277,"end":9.892},{"word":"repeating","start":10.182,"end":10.566},{"word":"the","start":10.6,"end":10.67},{"word":"same","start":10.728,"end":10.96},{"word":"acoustic","start":10.984,"end":11.448},{"word":"pattern","start":11.506,"end":11.866},{"word":"slowly,","start":11.924,"end":12.702},{"word":"your","start":12.992,"end":13.155},{"word":"brain","start":13.213,"end":13.48},{"word":"has","start":13.538,"end":13.677},{"word":"much","start":13.805,"end":14.072},{"word":"more","start":14.141,"end":14.304},{"word":"time","start":14.35,"end":14.617},{"word":"to","start":14.652,"end":14.722},{"word":"accumulate","start":14.78,"end":15.36},{"word":"evidence","start":15.407,"end":15.767},{"word":"of","start":15.79,"end":15.836},{"word":"the","start":15.871,"end":15.941},{"word":"pattern","start":15.976,"end":16.382},{"word":"and","start":16.672,"end":16.835},{"word":"filter","start":16.905,"end":17.23},{"word":"out","start":17.288,"end":17.404},{"word":"the","start":17.45,"end":17.52},{"word":"noise.","start":17.578,"end":18.112},{"word":"The","start":18.646,"end":18.774},{"word":"message","start":18.855,"end":19.227},{"word":"content","start":19.261,"end":19.726},{"word":"is","start":19.784,"end":19.888},{"word":"identical","start":19.958,"end":20.562},{"word":"\u2014","start":20.747,"end":20.852},{"word":"you","start":21.247,"end":21.34},{"word":"just","start":21.398,"end":21.56},{"word":"gave","start":21.595,"end":21.769},{"word":"yourself","start":21.804,"end":22.152},{"word":"more","start":22.233,"end":22.384},{"word":"integration","start":22.419,"end":22.942},{"word":"time","start":23.0,"end":23.418},{"word":"to","start":23.58,"end":23.685},{"word":"be","start":23.743,"end":23.824},{"word":"sure","start":23.859,"end":24.045},{"word":"of","start":24.068,"end":24.114},{"word":"what","start":24.149,"end":24.254},{"word":"you","start":24.288,"end":24.37},{"word":"heard.","start":24.451,"end":24.939}],"duration":24.939};
+
+let analogySF = 7;
+let analogyAudio = null;
+let analogyAnimId = null;
+
+// Build word spans
+(function buildAnalogyText() {
+  const container = document.getElementById('analogy-text');
+  analogyTimestamps.words.forEach((w, i) => {
+    const span = document.createElement('span');
+    span.className = 'aword';
+    span.dataset.wordIndex = i;
+    span.textContent = w.word;
+    container.appendChild(span);
+    container.appendChild(document.createTextNode(' '));
+  });
+})();
+
+function setAnalogySF(sf) {
+  analogySF = sf;
+  const btns = document.querySelectorAll('#analogy-sf-btns button');
+  btns.forEach((btn, i) => btn.classList.toggle('active', i === sf - 7));
+
+  // Speed: SF7 = 1.0, SF8 = 0.5, SF9 = 0.25, ... SF12 = 0.03125
+  const speed = Math.pow(0.5, sf - 7);
+  document.getElementById('analogy-speed-val').textContent = speed >= 0.1 ? speed.toFixed(1) + 'x' : speed.toFixed(4) + 'x';
+
+  // Update playback rate if currently playing — stop, change rate, resume
+  if (analogyAudio && !analogyAudio.paused) {
+    const clampedSpeed = Math.max(speed, 0.0625);
+    const currentTime = analogyAudio.currentTime;
+    analogyAudio.pause();
+    analogyAudio.playbackRate = clampedSpeed;
+    analogyAudio.currentTime = currentTime;
+    analogyAudio.play();
+  }
+}
+
+function analogyPlay() {
+  // Stop if already playing
+  if (analogyAudio && !analogyAudio.paused) {
+    analogyAudio.pause();
+    analogyAudio.currentTime = 0;
+    analogyCleanup();
+    document.getElementById('analogy-play').textContent = 'Play';
+    return;
+  }
+
+  const speed = Math.pow(0.5, analogySF - 7);
+
+  // For very slow speeds (SF11, SF12), the HTML5 audio min playbackRate is ~0.0625 in most browsers.
+  // We'll clamp and note it.
+  const clampedSpeed = Math.max(speed, 0.0625);
+
+  analogyAudio = new Audio('audio/sf_analogy.mp3');
+  analogyAudio.playbackRate = clampedSpeed;
+  analogyAudio.preservesPitch = true; // Keep pitch the same — just slower
+
+  document.getElementById('analogy-play').textContent = 'Stop';
+
+  analogyAudio.play().then(() => {
+    analogyTick();
+  });
+
+  analogyAudio.addEventListener('ended', () => {
+    analogyCleanup();
+    document.getElementById('analogy-play').textContent = 'Play';
+  });
+}
+
+function analogyTick() {
+  if (!analogyAudio || analogyAudio.paused) return;
+
+  const t = analogyAudio.currentTime;
+  const duration = analogyTimestamps.duration;
+  const words = analogyTimestamps.words;
+
+  // Update progress bar
+  document.getElementById('analogy-progress-fill').style.width = (t / duration * 100) + '%';
+
+  // Highlight words
+  const spans = document.querySelectorAll('#analogy-text .aword');
+  spans.forEach((span, i) => {
+    const w = words[i];
+    span.classList.remove('active', 'read');
+    if (t >= w.start && t <= w.end) {
+      span.classList.add('active');
+    } else if (t > w.end) {
+      span.classList.add('read');
+    }
+  });
+
+  analogyAnimId = requestAnimationFrame(analogyTick);
+}
+
+function analogyCleanup() {
+  if (analogyAnimId) cancelAnimationFrame(analogyAnimId);
+  analogyAnimId = null;
+  document.getElementById('analogy-progress-fill').style.width = '0%';
+  document.querySelectorAll('#analogy-text .aword').forEach(s => {
+    s.classList.remove('active', 'read');
+  });
+}
+
+// ===== PANEL 2: TRANSMISSION LIFECYCLE =====
+
+// 11 states from Casals et al., Sensors 2017
+// Duration in ms, current in mA (based on Semtech SX1272)
+// TX duration varies by SF — we scale state 3 based on the data rate table
+function getLifecycleStates() {
+  const d = DATA[currentBW][currentSF];
+  // TX time scales with SF. Base from paper: ~83ms at SF7/125.
+  // We use the ToA from our data as a proxy for TX duration
+  const txDuration = d.toaMs;
+
+  return [
+    { id: 1,  name: 'Wake Up',       shortName: 'WAKE',  durationMs: 168.2, currentMa: 22.1,  color: '#5c6bc0' },
+    { id: 2,  name: 'Radio Prep',    shortName: 'PREP',  durationMs: 83.8,  currentMa: 13.3,  color: '#7986cb' },
+    { id: 3,  name: 'Transmit',      shortName: 'TX',    durationMs: txDuration, currentMa: 83.0,  color: '#e57373' },
+    { id: 4,  name: 'Wait RX1',      shortName: 'WAIT1', durationMs: 983.3, currentMa: 27.0,  color: '#4db6ac' },
+    { id: 5,  name: 'RX1 Window',    shortName: 'RX1',   durationMs: 100,   currentMa: 38.1,  color: '#4fc3f7' },
+    { id: 6,  name: 'Wait RX2',      shortName: 'WAIT2', durationMs: 500,   currentMa: 27.1,  color: '#4db6ac' },
+    { id: 7,  name: 'RX2 Window',    shortName: 'RX2',   durationMs: 33.0,  currentMa: 35.0,  color: '#4fc3f7' },
+    { id: 8,  name: 'Radio Off',     shortName: 'OFF',   durationMs: 147.4, currentMa: 13.2,  color: '#78909c' },
+    { id: 9,  name: 'Post-process',  shortName: 'POST',  durationMs: 268.0, currentMa: 21.0,  color: '#9575cd' },
+    { id: 10, name: 'Shutdown',      shortName: 'SHUT',  durationMs: 38.6,  currentMa: 13.3,  color: '#78909c' },
+    { id: 11, name: 'Sleep',         shortName: 'SLEEP', durationMs: 600,   currentMa: 0.045, color: '#263238' },
+  ];
+}
+
+const lcPhasesEl = document.getElementById('lc-phases');
+const lcCanvas = document.getElementById('lc-canvas');
+const lcCtx = lcCanvas.getContext('2d');
+
+let lcAnimId = null;
+let lcStartTime = null;
+let lcPlaying = false;
+
+function lcGetTotalDuration(states) {
+  return states.reduce((sum, s) => sum + s.durationMs, 0);
+}
+
+function lcBuildTimeline() {
+  const states = getLifecycleStates();
+  const total = lcGetTotalDuration(states);
+  lcPhasesEl.innerHTML = '';
+
+  states.forEach((s, i) => {
+    const pct = (s.durationMs / total * 100);
+    const el = document.createElement('div');
+    el.className = 'lc-phase dim';
+    el.style.width = pct + '%';
+    el.style.background = s.color;
+    el.dataset.index = i;
+    // Only show label if wide enough
+    if (pct > 4) {
+      el.textContent = s.shortName;
+    }
+    el.title = `${s.name}: ${s.durationMs.toFixed(1)} ms @ ${s.currentMa} mA`;
+    lcPhasesEl.appendChild(el);
+  });
+
+  // Draw static graph
+  lcDrawGraph(states, -1, 0);
+  lcUpdateStats(states, -1, 0);
+  lcUpdateTotals(states);
+  lcUpdateParams();
+}
+
+function lcDrawGraph(states, activeIdx, progressInPhase) {
+  const canvas = lcCanvas;
+  resizeCanvas(canvas);
+  const ctx = lcCtx;
+
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+  const total = lcGetTotalDuration(states);
+
+  const padL = 50, padR = 16, padT = 16, padB = 24;
+  const gw = w - padL - padR;
+  const gh = h - padT - padB;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Find max current for y-axis (ignoring sleep which is tiny)
+  const maxCurrent = Math.max(...states.map(s => s.currentMa));
+
+  // Y-axis labels
+  ctx.fillStyle = 'rgba(136,146,168,0.6)';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'right';
+  const yTicks = [0, 20, 40, 60, 80];
+  yTicks.forEach(v => {
+    const y = padT + gh - (v / maxCurrent * gh);
+    ctx.fillText(v + ' mA', padL - 6, y + 3);
+    ctx.strokeStyle = 'rgba(45, 58, 92, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(padL + gw, y);
+    ctx.stroke();
+  });
+
+  // Calculate cumulative time offsets
+  let cumTime = 0;
+  const offsets = states.map(s => {
+    const start = cumTime;
+    cumTime += s.durationMs;
+    return { start, end: cumTime };
+  });
+
+  // Determine how far the animation has progressed (total ms elapsed)
+  let elapsedMs = 0;
+  if (activeIdx >= 0) {
+    for (let i = 0; i < activeIdx; i++) {
+      elapsedMs += states[i].durationMs;
+    }
+    elapsedMs += progressInPhase * states[activeIdx].durationMs;
+  }
+
+  // Draw current profile — filled area up to elapsed point
+  // First draw dim background for full profile
+  ctx.beginPath();
+  ctx.moveTo(padL, padT + gh); // bottom-left
+  states.forEach((s, i) => {
+    const x1 = padL + (offsets[i].start / total) * gw;
+    const x2 = padL + (offsets[i].end / total) * gw;
+    const y = padT + gh - (s.currentMa / maxCurrent * gh);
+    ctx.lineTo(x1, y);
+    ctx.lineTo(x2, y);
+  });
+  ctx.lineTo(padL + gw, padT + gh);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(45, 58, 92, 0.4)';
+  ctx.fill();
+
+  // Draw the "lit up" portion up to current elapsed time
+  if (activeIdx >= 0) {
+    ctx.beginPath();
+    ctx.moveTo(padL, padT + gh);
+    for (let i = 0; i <= activeIdx; i++) {
+      const x1 = padL + (offsets[i].start / total) * gw;
+      const y = padT + gh - (states[i].currentMa / maxCurrent * gh);
+      ctx.lineTo(x1, y);
+
+      if (i < activeIdx) {
+        const x2 = padL + (offsets[i].end / total) * gw;
+        ctx.lineTo(x2, y);
+      } else {
+        // Partial phase
+        const partialEnd = offsets[i].start + progressInPhase * states[i].durationMs;
+        const x2 = padL + (partialEnd / total) * gw;
+        ctx.lineTo(x2, y);
+        ctx.lineTo(x2, padT + gh);
+      }
+    }
+    ctx.closePath();
+
+    const grad = ctx.createLinearGradient(padL, padT, padL, padT + gh);
+    grad.addColorStop(0, 'rgba(255, 183, 77, 0.5)');
+    grad.addColorStop(1, 'rgba(255, 183, 77, 0.05)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Bright line on top edge
+    ctx.beginPath();
+    for (let i = 0; i <= activeIdx; i++) {
+      const x1 = padL + (offsets[i].start / total) * gw;
+      const y = padT + gh - (states[i].currentMa / maxCurrent * gh);
+      if (i === 0) ctx.moveTo(x1, y);
+      else ctx.lineTo(x1, y);
+
+      if (i < activeIdx) {
+        const x2 = padL + (offsets[i].end / total) * gw;
+        ctx.lineTo(x2, y);
+      } else {
+        const partialEnd = offsets[i].start + progressInPhase * states[i].durationMs;
+        const x2 = padL + (partialEnd / total) * gw;
+        ctx.lineTo(x2, y);
+      }
+    }
+    ctx.strokeStyle = 'rgba(255, 183, 77, 0.9)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Playhead dot
+    const phaseStart = offsets[activeIdx].start;
+    const px = padL + ((phaseStart + progressInPhase * states[activeIdx].durationMs) / total) * gw;
+    const py = padT + gh - (states[activeIdx].currentMa / maxCurrent * gh);
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffb74d';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Step outline (dimmed)
+  ctx.beginPath();
+  states.forEach((s, i) => {
+    const x1 = padL + (offsets[i].start / total) * gw;
+    const x2 = padL + (offsets[i].end / total) * gw;
+    const y = padT + gh - (s.currentMa / maxCurrent * gh);
+    if (i === 0) ctx.moveTo(x1, y);
+    else ctx.lineTo(x1, y);
+    ctx.lineTo(x2, y);
+  });
+  ctx.strokeStyle = 'rgba(136,146,168,0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Phase color bars at bottom
+  states.forEach((s, i) => {
+    const x1 = padL + (offsets[i].start / total) * gw;
+    const barW = (s.durationMs / total) * gw;
+    ctx.fillStyle = (i === activeIdx) ? s.color : 'rgba(45,58,92,0.5)';
+    ctx.fillRect(x1, padT + gh + 4, barW - 1, 6);
+  });
+}
+
+function lcUpdateStats(states, activeIdx, progressInPhase) {
+  if (activeIdx < 0) {
+    document.getElementById('lc-state-name').textContent = 'Idle';
+    document.getElementById('lc-current-draw').textContent = '0 mA';
+    document.getElementById('lc-duration').textContent = '-- ms';
+    document.getElementById('lc-elapsed').textContent = '0 ms';
+    return;
+  }
+
+  const s = states[activeIdx];
+  document.getElementById('lc-state-name').textContent = s.name;
+  document.getElementById('lc-current-draw').textContent = s.currentMa + ' mA';
+  document.getElementById('lc-duration').textContent = s.durationMs.toFixed(1) + ' ms';
+
+  let elapsed = 0;
+  for (let i = 0; i < activeIdx; i++) elapsed += states[i].durationMs;
+  elapsed += progressInPhase * s.durationMs;
+  document.getElementById('lc-elapsed').textContent = Math.round(elapsed) + ' ms';
+}
+
+function lcUpdateParams() {
+  const d = DATA[currentBW][currentSF];
+  document.getElementById('lc-param-sf').textContent = 'SF' + currentSF;
+  document.getElementById('lc-param-bw').textContent = currentBW + ' kHz';
+  document.getElementById('lc-param-dr').textContent = d.dr || 'No US DR';
+  document.getElementById('lc-param-bitrate').textContent = d.bitrate.toLocaleString() + ' bps';
+}
+
+function lcUpdateTotals(states) {
+  const total = lcGetTotalDuration(states);
+  // Total charge in mA*ms (= µA*s = µC roughly)
+  let charge = 0;
+  states.forEach(s => {
+    charge += s.currentMa * s.durationMs;
+  });
+  const avgCurrent = charge / total;
+
+  document.getElementById('lc-total-time').textContent = total.toFixed(0) + ' ms';
+  document.getElementById('lc-total-charge').textContent = (charge / 1000).toFixed(2) + ' mA·s';
+  document.getElementById('lc-avg-current').textContent = avgCurrent.toFixed(1) + ' mA';
+}
+
+function lcHighlightPhase(idx) {
+  const phases = lcPhasesEl.querySelectorAll('.lc-phase');
+  phases.forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+    el.classList.toggle('dim', i !== idx && idx >= 0);
+    if (idx < 0) el.classList.remove('dim');
+  });
+}
+
+function lcPlay() {
+  if (lcPlaying) return;
+  lcPlaying = true;
+
+  const states = getLifecycleStates();
+  const total = lcGetTotalDuration(states);
+  const speedSelect = document.getElementById('lc-speed-select');
+  const speed = parseFloat(speedSelect.value);
+
+  // Animation: map real duration to screen time
+  // At 1x speed, 1 real ms = 2 screen ms (so a ~2s cycle takes ~4s to animate)
+  const screenTimeScale = 2 / speed;
+  const totalScreenTime = total * screenTimeScale;
+
+  document.getElementById('lc-play').disabled = true;
+
+  lcStartTime = performance.now();
+
+  function tick(now) {
+    const screenElapsed = now - lcStartTime;
+    const simElapsed = screenElapsed / screenTimeScale; // ms in simulation time
+
+    // Find which state we're in
+    let cumTime = 0;
+    let activeIdx = -1;
+    let progressInPhase = 0;
+
+    for (let i = 0; i < states.length; i++) {
+      if (simElapsed < cumTime + states[i].durationMs) {
+        activeIdx = i;
+        progressInPhase = (simElapsed - cumTime) / states[i].durationMs;
+        break;
+      }
+      cumTime += states[i].durationMs;
+    }
+
+    if (activeIdx < 0) {
+      // Animation complete
+      lcPlaying = false;
+      document.getElementById('lc-play').disabled = false;
+      lcHighlightPhase(-1);
+      lcDrawGraph(states, states.length - 1, 1);
+      lcUpdateStats(states, states.length - 1, 1);
+
+      document.getElementById('lc-state-name').textContent = 'Complete';
+      document.getElementById('lc-elapsed').textContent = Math.round(total) + ' ms';
+      return;
+    }
+
+    lcHighlightPhase(activeIdx);
+    lcDrawGraph(states, activeIdx, progressInPhase);
+    lcUpdateStats(states, activeIdx, progressInPhase);
+
+    lcAnimId = requestAnimationFrame(tick);
+  }
+
+  lcAnimId = requestAnimationFrame(tick);
+}
+
+function lcReset() {
+  lcPlaying = false;
+  if (lcAnimId) cancelAnimationFrame(lcAnimId);
+  lcAnimId = null;
+  document.getElementById('lc-play').disabled = false;
+  lcBuildTimeline();
+  lcHighlightPhase(-1);
+}
+
+// ===== POWER COMPARISON =====
+const pwrStates = [
+  { name: 'Sleep',      currentMa: 0.045, color: '#263238' },
+  { name: 'Radio Prep', currentMa: 13.3,  color: '#7986cb' },
+  { name: 'Post-proc',  currentMa: 21.0,  color: '#9575cd' },
+  { name: 'Wake Up',    currentMa: 22.1,  color: '#5c6bc0' },
+  { name: 'Wait (idle)',currentMa: 27.0,  color: '#4db6ac' },
+  { name: 'RX2',        currentMa: 35.0,  color: '#4fc3f7' },
+  { name: 'RX1',        currentMa: 38.1,  color: '#29b6f6' },
+  { name: 'TX',         currentMa: 83.0,  color: '#e57373' },
+];
+
+function buildPowerBars() {
+  const linearEl = document.getElementById('pwr-bars-linear');
+  const logEl = document.getElementById('pwr-bars-log');
+  linearEl.innerHTML = '';
+  logEl.innerHTML = '';
+
+  const maxLinear = 83.0;
+  const maxLog = Math.log10(83.0);
+  const minLog = Math.log10(0.01); // floor for log scale
+
+  pwrStates.forEach(s => {
+    // Linear bar
+    const linearPct = (s.currentMa / maxLinear) * 100;
+    linearEl.appendChild(makePwrBar(s, linearPct));
+
+    // Log bar
+    const logVal = s.currentMa > 0 ? Math.log10(s.currentMa) : minLog;
+    const logPct = ((logVal - minLog) / (maxLog - minLog)) * 100;
+    logEl.appendChild(makePwrBar(s, Math.max(logPct, 2)));
+  });
+
+  // Update ratio
+  const ratio = Math.round(83.0 / 0.045);
+  document.getElementById('pwr-ratio').textContent = ratio.toLocaleString() + 'x';
+  document.getElementById('pwr-ratio-label').textContent = ratio.toLocaleString();
+}
+
+function makePwrBar(s, pct) {
+  const row = document.createElement('div');
+  row.className = 'pwr-bar-row';
+
+  const label = document.createElement('div');
+  label.className = 'pwr-bar-label';
+  label.textContent = s.name;
+
+  const track = document.createElement('div');
+  track.className = 'pwr-bar-track';
+
+  const fill = document.createElement('div');
+  fill.className = 'pwr-bar-fill';
+  fill.style.width = pct + '%';
+  fill.style.background = s.color;
+
+  const value = document.createElement('div');
+  value.className = 'pwr-bar-value';
+  value.textContent = s.currentMa >= 1 ? s.currentMa + ' mA' : (s.currentMa * 1000) + ' \u00B5A';
+
+  track.appendChild(fill);
+  row.appendChild(label);
+  row.appendChild(track);
+  row.appendChild(value);
+  return row;
+}
+
+// ===== PANEL 3: BATTERY LIFE CALCULATOR =====
+const battCapacitySlider = document.getElementById('batt-capacity');
+const battIntervalSlider = document.getElementById('batt-interval');
+const battDutyCanvas = document.getElementById('batt-duty-canvas');
+const battDutyCtx = battDutyCanvas.getContext('2d');
+
+battCapacitySlider.addEventListener('input', updateBattery);
+battIntervalSlider.addEventListener('input', updateBattery);
+
+function setBattCapacity(val) {
+  battCapacitySlider.value = val;
+  updateBattery();
+}
+
+function setBattInterval(val) {
+  battIntervalSlider.value = val;
+  updateBattery();
+}
+
+function updateBattery() {
+  const capacityMah = parseInt(battCapacitySlider.value);
+  const intervalMin = parseInt(battIntervalSlider.value);
+
+  // Format interval display
+  let intervalLabel;
+  if (intervalMin < 60) intervalLabel = intervalMin + ' min';
+  else if (intervalMin < 1440) intervalLabel = (intervalMin / 60).toFixed(intervalMin % 60 === 0 ? 0 : 1) + ' hr';
+  else intervalLabel = (intervalMin / 1440).toFixed(1) + ' days';
+
+  document.getElementById('batt-capacity-val').textContent = capacityMah.toLocaleString() + ' mAh';
+  document.getElementById('batt-interval-val').textContent = intervalLabel;
+
+  // Get active cycle time from lifecycle states
+  const states = getLifecycleStates();
+  // Active time = total cycle minus sleep
+  const totalCycleMs = states.reduce((s, st) => s + st.durationMs, 0);
+  const sleepMs = states[states.length - 1].durationMs;
+  const activeTimeMs = totalCycleMs - sleepMs;
+
+  // Average active current (weighted by duration across active states)
+  let activeChargeMs = 0; // mA * ms
+  for (let i = 0; i < states.length - 1; i++) {
+    activeChargeMs += states[i].currentMa * states[i].durationMs;
+  }
+  const avgActiveCurrent = activeChargeMs / activeTimeMs; // mA
+
+  const sleepCurrent = 0.045; // mA (SX1272 sleep)
+  const intervalMs = intervalMin * 60 * 1000;
+
+  // Duty cycle: active time / total period
+  const dutyCycle = activeTimeMs / intervalMs;
+
+  // Average current: D * I_A + (1-D) * I_S
+  const avgCurrent = dutyCycle * avgActiveCurrent + (1 - dutyCycle) * sleepCurrent;
+
+  // Battery life in hours
+  const lifeHours = capacityMah / avgCurrent;
+
+  // Update display
+  document.getElementById('batt-sf').textContent = currentSF;
+  document.getElementById('batt-active-time').textContent = activeTimeMs.toFixed(0) + ' ms';
+  document.getElementById('batt-avg-active').textContent = avgActiveCurrent.toFixed(1) + ' mA';
+  document.getElementById('batt-duty-cycle').textContent = dutyCycle < 0.01
+    ? (dutyCycle * 100).toFixed(4) + '%'
+    : (dutyCycle * 100).toFixed(2) + '%';
+
+  // Format battery life
+  let lifeNumber, lifeUnit, lifeDetail;
+  if (lifeHours < 24) {
+    lifeNumber = lifeHours.toFixed(1);
+    lifeUnit = 'hours';
+    lifeDetail = '';
+  } else if (lifeHours < 24 * 30) {
+    lifeNumber = (lifeHours / 24).toFixed(1);
+    lifeUnit = 'days';
+    lifeDetail = `(${Math.round(lifeHours)} hours)`;
+  } else if (lifeHours < 24 * 365) {
+    lifeNumber = (lifeHours / 24 / 30.44).toFixed(1);
+    lifeUnit = 'months';
+    lifeDetail = `(${(lifeHours / 24).toFixed(0)} days)`;
+  } else {
+    lifeNumber = (lifeHours / 24 / 365.25).toFixed(1);
+    lifeUnit = 'years';
+    lifeDetail = `(${(lifeHours / 24 / 30.44).toFixed(0)} months)`;
+  }
+
+  document.getElementById('batt-life-number').textContent = lifeNumber;
+  document.getElementById('batt-life-unit').textContent = lifeUnit;
+  document.getElementById('batt-life-detail').textContent = lifeDetail;
+
+  // Battery icon fill — map life logarithmically (1 hour = ~5%, 10 years = 95%)
+  const logLife = Math.log10(Math.max(lifeHours, 1));
+  const maxLog = Math.log10(24 * 365 * 15); // 15 years
+  const fillPct = Math.min(95, Math.max(5, (logLife / maxLog) * 95));
+  const fillEl = document.getElementById('batt-fill-level');
+  fillEl.style.height = fillPct + '%';
+
+  // Color based on life
+  if (lifeHours < 24 * 30) {
+    fillEl.style.background = 'var(--accent4)'; // red
+  } else if (lifeHours < 24 * 365) {
+    fillEl.style.background = 'var(--accent3)'; // orange
+  } else {
+    fillEl.style.background = 'var(--accent2)'; // green
+  }
+
+  // Duty cycle formula with actual values
+  const activeTimeSec = (activeTimeMs / 1000).toFixed(2);
+  const intervalSec = (intervalMs / 1000).toFixed(0);
+  document.getElementById('batt-duty-formula').innerHTML =
+    `D = A / (A + S) = ` +
+    `<span class="val">${activeTimeSec}</span> <span class="op">s /</span> ` +
+    `<span class="val">${intervalSec}</span> <span class="op">s =</span> ` +
+    `<span class="result">${dutyCycle < 0.01 ? dutyCycle.toExponential(2) : dutyCycle.toFixed(4)}</span>` +
+    ` <span class="op">(${(dutyCycle * 100).toFixed(4)}%)</span>`;
+
+  // Battery life formula with actual values
+  document.getElementById('batt-formula').innerHTML =
+    `L = <span class="val">${capacityMah.toLocaleString()}</span> <span class="op">mAh</span> / ` +
+    `(<span class="val">${dutyCycle.toExponential(2)}</span> <span class="op">&times;</span> ` +
+    `<span class="val">${avgActiveCurrent.toFixed(1)}</span> <span class="op">mA +</span> ` +
+    `<span class="val">${(1 - dutyCycle).toFixed(6)}</span> <span class="op">&times;</span> ` +
+    `<span class="val">${sleepCurrent}</span> <span class="op">mA)</span>` +
+    `<br><span class="op">= </span><span class="val">${capacityMah.toLocaleString()}</span> <span class="op">mAh /</span> ` +
+    `<span class="val">${avgCurrent.toFixed(4)}</span> <span class="op">mA = </span>` +
+    `<span class="result">${lifeNumber} ${lifeUnit}</span>`;
+
+  drawDutyCycle(activeTimeMs, intervalMs, avgActiveCurrent, sleepCurrent);
+
+  // Insight: break down where the current is coming from
+  const sleepContribution = (1 - dutyCycle) * sleepCurrent; // mA from sleep
+  const activeContribution = dutyCycle * avgActiveCurrent;  // mA from active
+  const sleepPct = (sleepContribution / avgCurrent * 100).toFixed(1);
+  const activePct = (activeContribution / avgCurrent * 100).toFixed(1);
+
+  // Battery life if we could eliminate all TX (sleep only)
+  const sleepOnlyLifeHrs = capacityMah / sleepCurrent;
+  const sleepOnlyYears = (sleepOnlyLifeHrs / 24 / 365.25).toFixed(1);
+
+  let insightHtml = `<strong>Where is the energy going?</strong><br>`;
+  insightHtml += `Average current: <span class="val">${avgCurrent.toFixed(4)} mA</span> — `;
+  insightHtml += `of that, <span class="val">${activePct}%</span> comes from active TX cycles `;
+  insightHtml += `and <span class="val">${sleepPct}%</span> from sleep baseline.<br>`;
+
+  if (parseFloat(sleepPct) > 50) {
+    insightHtml += `<br><strong>Sleep current is dominating.</strong> `;
+    insightHtml += `Even if you could transmit instantly (zero TX time), the sleep drain alone `;
+    insightHtml += `(${sleepCurrent} mA &times; 24/7) limits this battery to <span class="val">~${sleepOnlyYears} years</span>. `;
+    insightHtml += `Reducing transmit frequency further gives <strong>diminishing returns</strong> — `;
+    insightHtml += `you're already near the floor. To improve, you'd need a lower-sleep-current radio.`;
+  } else if (parseFloat(activePct) > 80) {
+    insightHtml += `<br><strong>TX cycles are dominating.</strong> `;
+    insightHtml += `Most of the energy is burned during active transmission. `;
+    insightHtml += `Reducing SF or increasing the transmit interval will have a big impact here.`;
+  } else {
+    insightHtml += `<br>Both sleep and TX contribute meaningfully. `;
+    insightHtml += `Reducing transmit frequency will help, but there's a floor at `;
+    insightHtml += `<span class="val">~${sleepOnlyYears} years</span> (sleep-only limit for this battery).`;
+  }
+
+  document.getElementById('batt-insight').innerHTML = insightHtml;
+}
+
+function drawDutyCycle(activeMs, intervalMs, activeCurrent, sleepCurrent) {
+  const canvas = battDutyCanvas;
+  resizeCanvas(canvas);
+  const ctx = battDutyCtx;
+
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+  const padL = 70, padR = 20, padT = 20, padB = 40;
+  const gw = w - padL - padR;
+  const gh = h - padT - padB;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Show 3 complete cycles
+  const numCycles = 3;
+  const cycleWidth = gw / numCycles;
+
+  // Duty cycle ratio for rendering
+  const dutyRatio = activeMs / intervalMs;
+  // Make active pulse visible even at tiny duty cycles: min 5px
+  const minPulseW = 5;
+  const pulseW = Math.max(minPulseW, dutyRatio * cycleWidth);
+
+  const maxCurrent = activeCurrent;
+  const activeY = padT + gh * 0.05;
+  const sleepY = padT + gh * 0.80;
+
+  // Y-axis labels
+  ctx.fillStyle = 'rgba(136,146,168,0.8)';
+  ctx.font = '13px Inter, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(activeCurrent.toFixed(0) + ' mA', padL - 8, activeY + 5);
+  ctx.fillStyle = 'rgba(136,146,168,0.6)';
+  ctx.font = '12px Inter, sans-serif';
+  ctx.fillText(sleepCurrent + ' mA', padL - 8, sleepY + 5);
+
+  // Y-axis descriptive labels
+  ctx.fillStyle = 'rgba(129,199,132,0.6)';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.fillText('(active)', padL - 8, activeY + 18);
+  ctx.fillStyle = 'rgba(136,146,168,0.4)';
+  ctx.fillText('(sleep)', padL - 8, sleepY + 18);
+
+  // Baseline
+  ctx.strokeStyle = 'rgba(45, 58, 92, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padL, sleepY);
+  ctx.lineTo(padL + gw, sleepY);
+  ctx.stroke();
+
+  // Active current dashed line
+  ctx.strokeStyle = 'rgba(129, 199, 132, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(padL, activeY);
+  ctx.lineTo(padL + gw, activeY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  for (let c = 0; c < numCycles; c++) {
+    const cx = padL + c * cycleWidth;
+
+    // Sleep region (flat low line)
+    ctx.strokeStyle = 'rgba(38, 50, 56, 0.8)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + pulseW, sleepY);
+    ctx.lineTo(cx + cycleWidth, sleepY);
+    ctx.stroke();
+
+    // Active pulse fill
+    ctx.fillStyle = 'rgba(129, 199, 132, 0.12)';
+    ctx.fillRect(cx, activeY, pulseW, sleepY - activeY);
+
+    // Active pulse outline
+    ctx.strokeStyle = 'rgba(129, 199, 132, 0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, sleepY);
+    ctx.lineTo(cx, activeY);
+    ctx.lineTo(cx + pulseW, activeY);
+    ctx.lineTo(cx + pulseW, sleepY);
+    ctx.stroke();
+
+    // Labels on first cycle
+    if (c === 0) {
+      // Active label
+      ctx.fillStyle = 'rgba(129,199,132,0.9)';
+      ctx.font = 'bold 13px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      const labelX = cx + pulseW / 2;
+      if (pulseW > 24) {
+        ctx.fillText('TX', labelX, activeY + gh * 0.35);
+      } else {
+        // Label to the right of the pulse if too narrow
+        ctx.textAlign = 'left';
+        ctx.fillText('TX', cx + pulseW + 6, activeY + gh * 0.25);
+        ctx.textAlign = 'center';
+      }
+
+      // Sleep label
+      ctx.fillStyle = 'rgba(136,146,168,0.6)';
+      ctx.font = '13px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Sleep', cx + pulseW + (cycleWidth - pulseW) / 2, sleepY - 14);
+
+      // Interval bracket below
+      const bY = sleepY + 20;
+      ctx.strokeStyle = 'rgba(255,183,77,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, bY); ctx.lineTo(cx, bY + 8);
+      ctx.moveTo(cx, bY + 4); ctx.lineTo(cx + cycleWidth, bY + 4);
+      ctx.moveTo(cx + cycleWidth, bY); ctx.lineTo(cx + cycleWidth, bY + 8);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,183,77,0.85)';
+      ctx.font = 'bold 13px Inter, sans-serif';
+      ctx.textAlign = 'center';
+
+      const intMin = intervalMs / 60000;
+      const intLabel = intMin < 60 ? intMin + ' min' : (intMin / 60).toFixed(intMin % 60 === 0 ? 0 : 1) + ' hr';
+      ctx.fillText('Interval: ' + intLabel, cx + cycleWidth / 2, bY + 22);
+    }
+  }
+}
+
+// Rebuild lifecycle when SF/BW changes
+const origUpdate = update;
+update = function() {
+  origUpdate();
+  if (!lcPlaying) {
+    lcBuildTimeline();
+  }
+  buildPowerBars();
+  updateBattery();
+};
+
+// ===== INIT =====
+window.addEventListener('resize', () => {
+  drawChirp(); drawRange();
+  if (!lcPlaying) lcBuildTimeline();
+  updateBattery();
+});
+update();
+animateChirp();
+lcBuildTimeline();
+buildPowerBars();
+updateBattery();
+</script>
+</body>
+</html>

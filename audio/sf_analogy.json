@@ -1,0 +1,386 @@
+{
+  "words": [
+    {
+      "word": "An",
+      "start": 0.0,
+      "end": 0.163
+    },
+    {
+      "word": "analogy:",
+      "start": 0.209,
+      "end": 0.894
+    },
+    {
+      "word": "imagine",
+      "start": 1.231,
+      "end": 1.649
+    },
+    {
+      "word": "trying",
+      "start": 1.683,
+      "end": 1.881
+    },
+    {
+      "word": "to",
+      "start": 1.916,
+      "end": 1.962
+    },
+    {
+      "word": "hear",
+      "start": 2.009,
+      "end": 2.159
+    },
+    {
+      "word": "someone",
+      "start": 2.229,
+      "end": 2.519
+    },
+    {
+      "word": "whisper",
+      "start": 2.554,
+      "end": 2.868
+    },
+    {
+      "word": "in",
+      "start": 2.914,
+      "end": 2.961
+    },
+    {
+      "word": "a",
+      "start": 3.007,
+      "end": 3.03
+    },
+    {
+      "word": "noisy",
+      "start": 3.077,
+      "end": 3.344
+    },
+    {
+      "word": "room.",
+      "start": 3.402,
+      "end": 3.796
+    },
+    {
+      "word": "If",
+      "start": 4.087,
+      "end": 4.203
+    },
+    {
+      "word": "they",
+      "start": 4.238,
+      "end": 4.342
+    },
+    {
+      "word": "say",
+      "start": 4.389,
+      "end": 4.54
+    },
+    {
+      "word": "one",
+      "start": 4.61,
+      "end": 4.761
+    },
+    {
+      "word": "quick",
+      "start": 4.807,
+      "end": 4.993
+    },
+    {
+      "word": "word,",
+      "start": 5.039,
+      "end": 5.26
+    },
+    {
+      "word": "you",
+      "start": 5.283,
+      "end": 5.353
+    },
+    {
+      "word": "might",
+      "start": 5.399,
+      "end": 5.55
+    },
+    {
+      "word": "miss",
+      "start": 5.585,
+      "end": 5.782
+    },
+    {
+      "word": "it.",
+      "start": 5.852,
+      "end": 6.096
+    },
+    {
+      "word": "If",
+      "start": 6.351,
+      "end": 6.479
+    },
+    {
+      "word": "they",
+      "start": 6.514,
+      "end": 6.63
+    },
+    {
+      "word": "stretch",
+      "start": 6.688,
+      "end": 6.99
+    },
+    {
+      "word": "that",
+      "start": 7.059,
+      "end": 7.199
+    },
+    {
+      "word": "same",
+      "start": 7.315,
+      "end": 7.64
+    },
+    {
+      "word": "word",
+      "start": 7.686,
+      "end": 7.907
+    },
+    {
+      "word": "out",
+      "start": 7.965,
+      "end": 8.093
+    },
+    {
+      "word": "over",
+      "start": 8.139,
+      "end": 8.302
+    },
+    {
+      "word": "32",
+      "start": 8.395,
+      "end": 8.871
+    },
+    {
+      "word": "times",
+      "start": 8.929,
+      "end": 9.207
+    },
+    {
+      "word": "longer,",
+      "start": 9.277,
+      "end": 9.892
+    },
+    {
+      "word": "repeating",
+      "start": 10.182,
+      "end": 10.566
+    },
+    {
+      "word": "the",
+      "start": 10.6,
+      "end": 10.67
+    },
+    {
+      "word": "same",
+      "start": 10.728,
+      "end": 10.96
+    },
+    {
+      "word": "acoustic",
+      "start": 10.984,
+      "end": 11.448
+    },
+    {
+      "word": "pattern",
+      "start": 11.506,
+      "end": 11.866
+    },
+    {
+      "word": "slowly,",
+      "start": 11.924,
+      "end": 12.702
+    },
+    {
+      "word": "your",
+      "start": 12.992,
+      "end": 13.155
+    },
+    {
+      "word": "brain",
+      "start": 13.213,
+      "end": 13.48
+    },
+    {
+      "word": "has",
+      "start": 13.538,
+      "end": 13.677
+    },
+    {
+      "word": "much",
+      "start": 13.805,
+      "end": 14.072
+    },
+    {
+      "word": "more",
+      "start": 14.141,
+      "end": 14.304
+    },
+    {
+      "word": "time",
+      "start": 14.35,
+      "end": 14.617
+    },
+    {
+      "word": "to",
+      "start": 14.652,
+      "end": 14.722
+    },
+    {
+      "word": "accumulate",
+      "start": 14.78,
+      "end": 15.36
+    },
+    {
+      "word": "evidence",
+      "start": 15.407,
+      "end": 15.767
+    },
+    {
+      "word": "of",
+      "start": 15.79,
+      "end": 15.836
+    },
+    {
+      "word": "the",
+      "start": 15.871,
+      "end": 15.941
+    },
+    {
+      "word": "pattern",
+      "start": 15.976,
+      "end": 16.382
+    },
+    {
+      "word": "and",
+      "start": 16.672,
+      "end": 16.835
+    },
+    {
+      "word": "filter",
+      "start": 16.905,
+      "end": 17.23
+    },
+    {
+      "word": "out",
+      "start": 17.288,
+      "end": 17.404
+    },
+    {
+      "word": "the",
+      "start": 17.45,
+      "end": 17.52
+    },
+    {
+      "word": "noise.",
+      "start": 17.578,
+      "end": 18.112
+    },
+    {
+      "word": "The",
+      "start": 18.646,
+      "end": 18.774
+    },
+    {
+      "word": "message",
+      "start": 18.855,
+      "end": 19.227
+    },
+    {
+      "word": "content",
+      "start": 19.261,
+      "end": 19.726
+    },
+    {
+      "word": "is",
+      "start": 19.784,
+      "end": 19.888
+    },
+    {
+      "word": "identical",
+      "start": 19.958,
+      "end": 20.562
+    },
+    {
+      "word": "\u2014",
+      "start": 20.747,
+      "end": 20.852
+    },
+    {
+      "word": "you",
+      "start": 21.247,
+      "end": 21.34
+    },
+    {
+      "word": "just",
+      "start": 21.398,
+      "end": 21.56
+    },
+    {
+      "word": "gave",
+      "start": 21.595,
+      "end": 21.769
+    },
+    {
+      "word": "yourself",
+      "start": 21.804,
+      "end": 22.152
+    },
+    {
+      "word": "more",
+      "start": 22.233,
+      "end": 22.384
+    },
+    {
+      "word": "integration",
+      "start": 22.419,
+      "end": 22.942
+    },
+    {
+      "word": "time",
+      "start": 23.0,
+      "end": 23.418
+    },
+    {
+      "word": "to",
+      "start": 23.58,
+      "end": 23.685
+    },
+    {
+      "word": "be",
+      "start": 23.743,
+      "end": 23.824
+    },
+    {
+      "word": "sure",
+      "start": 23.859,
+      "end": 24.045
+    },
+    {
+      "word": "of",
+      "start": 24.068,
+      "end": 24.114
+    },
+    {
+      "word": "what",
+      "start": 24.149,
+      "end": 24.254
+    },
+    {
+      "word": "you",
+      "start": 24.288,
+      "end": 24.37
+    },
+    {
+      "word": "heard.",
+      "start": 24.451,
+      "end": 24.939
+    }
+  ],
+  "duration": 24.939,
+  "text": "An analogy: imagine trying to hear someone whisper in a noisy room. If they say one quick word, you might miss it. If they stretch that same word out over 32 times longer, repeating the same acoustic pattern slowly, your brain has much more time to accumulate evidence of the pattern and filter out the noise. The message content is identical \u2014 you just gave yourself more integration time to be sure of what you heard."
+}
