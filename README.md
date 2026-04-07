@@ -24,6 +24,11 @@ An audio section lets students *hear* the spreading factor concept: the same nar
 - Web Audio API for playback speed manipulation
 - ElevenLabs TTS for the audio analogy clip (pre-generated, stored in `audio/`)
 
+## Live Pages
+
+- **[IoT LoRa Spreading Factor Explorer](https://trbll.github.io/iot-lora-tradeoffs/)** — Interactive tool with sliders, animations, and calculators
+- **[On the Patience of Signals](https://trbll.github.io/iot-lora-tradeoffs/auto-article.html)** — AI-generated companion article in illuminated manuscript style
+
 ## Usage
 
 Open `index.html` in any modern browser. No server required.
@@ -38,10 +43,15 @@ python3 -m http.server 8000
 
 ```
 lora-toy/
-├── index.html          # The entire application (single file)
+├── index.html            # Interactive LoRa explorer (single file)
+├── auto-article.html     # AI-generated companion article
+├── assets/               # Editorial illustrations for the article
+│   ├── lora-banner.png
+│   ├── lora-closing-banner.png
+│   └── lora-dropcap-*.png
 ├── audio/
-│   ├── sf_analogy.mp3  # TTS narration for the SF audio analogy
-│   └── sf_analogy.json # Word-level timestamps for highlight sync
+│   ├── sf_analogy.mp3    # TTS narration for the SF audio analogy
+│   └── sf_analogy.json   # Word-level timestamps for highlight sync
 └── README.md
 ```
 
