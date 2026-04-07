@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>On the Patience of Signals</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html {
+  background: #f5f2ec;
+  color: #1e1a18;
+  font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  display: flex;
+  justify-content: center;
+  padding: 64px 40px 140px;
+  min-height: 100vh;
+}
+.page {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  max-width: 1100px;
+  width: 100%;
+}
+.spacer {
+  flex: 1;
+  max-width: 240px;
+}
+.main {
+  width: 660px;
+  flex-shrink: 0;
+  border: 1px solid #d0c7bb;
+  border-width: 1px 1px 1px 1px;
+  padding: 48px 48px 56px;
+  background: #faf8f4;
+  box-shadow: 0 0 0 4px #f5f2ec, 0 0 0 5px #e0d8ce;
+}
+.margin {
+  flex: 1;
+  min-width: 160px;
+  max-width: 240px;
+  padding-left: 44px;
+  position: relative;
+}
+.title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #1a1614;
+  margin-bottom: 8px;
+  padding-top: 8px;
+}
+.subtitle {
+  text-align: center;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: #5c534b;
+  margin-bottom: 28px;
+}
+.banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 36px;
+}
+.drop-cap-block {
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.drop-cap-img {
+  float: left;
+  width: 100px;
+  height: 100px;
+  margin: 2px 16px 4px 0;
+  object-fit: cover;
+}
+.drop-cap-block p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: #2a2420;
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+.prose {
+  font-size: 17px;
+  line-height: 1.7;
+  color: #2a2420;
+  margin-bottom: 18px;
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+.prose em { font-style: italic; }
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #8a7e74;
+  margin-top: 36px;
+  margin-bottom: 16px;
+}
+.rule {
+  border: none;
+  border-top: 1px solid #d0c7bb;
+  margin: 32px 0;
+}
+.code-block {
+  margin: 32px 0;
+  border-top: 1px solid #c8bfb4;
+  border-bottom: 1px solid #c8bfb4;
+  padding: 24px 0;
+}
+.code-block table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: 'Courier New', 'Courier', monospace;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #2a2420;
+}
+.code-block .line-num {
+  width: 36px;
+  text-align: right;
+  padding-right: 16px;
+  color: #b8ada3;
+  font-size: 13px;
+  vertical-align: top;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.code-block .line-content { padding: 0; white-space: pre; }
+.code-block .comment { color: #8a7e74; font-style: italic; }
+.code-block .keyword { color: #6e5544; font-weight: 600; }
+.code-block .type { color: #955f3b; }
+.code-block .string { color: #7a6652; }
+.code-block .number { color: #955f3b; }
+.code-block .property { color: #4a3f36; }
+.code-block .null-val { color: #8a7e74; font-style: italic; }
+.closing {
+  margin-top: 36px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #2a2420;
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+.snippet {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: #d0c7bb;
+  text-underline-offset: 3px;
+  cursor: default;
+  padding: 1px 3px;
+  margin: -1px -3px;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+.snippet.active {
+  background: rgba(222, 115, 86, 0.18);
+  text-decoration-color: #DE7356;
+  text-decoration-style: solid;
+  text-decoration-thickness: 2px;
+  box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.08);
+}
+.margin-note {
+  position: absolute;
+  left: 44px;
+  right: 0;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.5;
+  color: #9a8e84;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: default;
+  transition: all 0.3s ease;
+}
+.margin-note.active {
+  color: #DE7356;
+  background: rgba(222, 115, 86, 0.08);
+  transform: translateX(-4px);
+  box-shadow: -3px 0 0 0 #DE7356;
+}
+.page.has-active-connection .prose,
+.page.has-active-connection .drop-cap-block,
+.page.has-active-connection .closing,
+.page.has-active-connection .code-block,
+.page.has-active-connection .section-title {
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+.page.has-active-connection .highlight-parent {
+  opacity: 1 !important;
+}
+.page.has-active-connection .margin-note {
+  opacity: 0.25;
+  transition: opacity 0.3s ease;
+}
+.page.has-active-connection .margin-note.active {
+  opacity: 1;
+}
+.connection-line {
+  position: fixed;
+  pointer-events: none;
+  z-index: 100;
+}
+.colophon {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid #d8cec3;
+  font-size: 11px;
+  font-style: italic;
+  color: #b0a598;
+  text-align: center;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+@media (max-width: 1000px) {
+  body { padding: 40px 20px 100px; }
+  .page { flex-direction: column; max-width: 660px; align-items: center; }
+  .spacer { display: none; }
+  .main { width: 100%; }
+  .margin { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="spacer"></div>
+  <div class="main">
+    <div class="title">On the Patience of Signals</div>
+    <div class="subtitle">being a meditation on the tradeoffs of reach and speed in low-power radio</div>
+
+    <img class="banner" src="./assets/lora-banner.png" alt="" />
+
+    <!-- OPENING -->
+    <div class="drop-cap-block" data-note="coinCell">
+      <img class="drop-cap-img" src="./assets/lora-dropcap-C-opening.png" alt="C" />
+      <p>onsider the predicament of a small device buried in a field, miles from the nearest tower, powered by nothing more than a <span class="snippet" data-ann="coinCell">coin cell battery the size of a nickel</span>. It must speak &mdash; must send its readings of soil moisture or temperature or tilt &mdash; across kilometres of open air, through walls of noise, on a power budget so meagre that each transmission is an act of careful thrift. This is the world of LoRa, and its central engineering decision is not <em>what</em> to say, but <em>how slowly to say it</em>.</p>
+    </div>
+
+    <p class="prose" data-note="loraName">The name itself is a clue. <span class="snippet" data-ann="loraName">LoRa stands for Long Range</span>, and long range, in the physics of radio, is purchased not with louder transmissions but with more patient ones. The technology that makes this possible is a modulation scheme with an evocative name: Chirp Spread Spectrum. To understand the tradeoffs of LoRa is to understand why patience &mdash; in the form of a single tuneable parameter called the Spreading Factor &mdash; is the currency in which range, speed, and battery life are denominated.</p>
+
+    <!-- SECTION I -->
+    <div class="section-title">I. Of Chirps and Whispers</div>
+
+    <div class="drop-cap-block" data-note="chirpOrigin">
+      <img class="drop-cap-img" src="./assets/lora-dropcap-I-chirps.png" alt="I" />
+      <p>n the lexicon of radio engineering, a <span class="snippet" data-ann="chirpOrigin">chirp is a signal whose frequency sweeps smoothly from low to high</span> over a fixed interval &mdash; imagine a bird&rsquo;s ascending call rendered in electromagnetic waves. Every piece of data in LoRa is encoded not as a fixed tone but as a pattern of these rising sweeps across the available bandwidth. The Spreading Factor, numbered seven through twelve, determines how many chirps compose each symbol of data. At SF7, a symbol consists of 128 chirps and passes quickly. At SF12, the same symbol requires 4,096 chirps &mdash; thirty-two times as many &mdash; and takes proportionally longer to transmit.</p>
+    </div>
+
+    <p class="prose" data-note="sfAnalogy">The analogy that clarifies this best is acoustic. Imagine trying to hear someone whisper in a noisy room. If they say one quick word, you might miss it. If they <span class="snippet" data-ann="sfAnalogy">stretch that same word out over thirty-two times longer</span>, repeating the same acoustic pattern slowly, your brain has much more time to accumulate evidence of the pattern and filter out the noise. The message content is identical &mdash; you have merely given yourself more integration time to be sure of what you heard. This is precisely what a higher spreading factor accomplishes in the radio domain.</p>
+
+    <!-- SECTION II -->
+    <div class="section-title">II. The Arithmetic of Reach</div>
+
+    <div class="drop-cap-block" data-note="processingGain">
+      <img class="drop-cap-img" src="./assets/lora-dropcap-T-reach.png" alt="T" />
+      <p>he fundamental bargain of spreading factor is this: every step upward doubles the time each symbol occupies the air, which halves the data rate, but adds <span class="snippet" data-ann="processingGain">approximately 2.5 decibels of processing gain</span> to the receiver&rsquo;s sensitivity. The signal does not travel farther &mdash; radio waves are indifferent to our encoding choices &mdash; but the receiver can now decode a much weaker copy of it. Range, in other words, is not a property of the transmitter&rsquo;s power but of the receiver&rsquo;s patience.</p>
+    </div>
+
+    <p class="prose" data-note="dataRates">The numbers are stark. <span class="snippet" data-ann="dataRates">At SF7, a LoRa radio achieves 5,470 bits per second and can carry payloads of up to 250 bytes. At SF10, the rate falls to 980 bits per second, and the maximum payload shrinks to just 19 bytes.</span> In the US 902&ndash;928 MHz band, these correspond to data rates DR3 and DR0 respectively at 125 kHz bandwidth. At 500 kHz bandwidth, the full range of SF7 through SF12 is available, with SF7 reaching 21,900 bits per second &mdash; fast by LoRa standards, though glacial by the standards of WiFi or cellular.</p>
+
+    <p class="prose" data-note="timeOnAir">The time on air &mdash; literally how long the radio waves occupy the channel for a single message &mdash; follows this same exponential curve. A ten-byte payload at SF7 spends roughly <span class="snippet" data-ann="timeOnAir">39 milliseconds on the air. The same payload at SF12 requires 991 milliseconds</span> &mdash; nearly a full second. Each step up in spreading factor approximately doubles the duration, because each symbol now contains twice as many chirps, each of which must be transmitted in sequence.</p>
+
+    <!-- SECTION III -->
+    <div class="section-title">III. The Eleven States of Waking</div>
+
+    <div class="drop-cap-block" data-note="casalsRef">
+      <img class="drop-cap-img" src="./assets/lora-dropcap-A-lifecycle.png" alt="A" />
+      <p>&nbsp;single LoRaWAN transmission is not merely the act of sending. It is an elaborate choreography of eleven distinct states, each with its own current draw and duration, <span class="snippet" data-ann="casalsRef">measured with precision by Casals and colleagues</span> on a Multitech mDot platform carrying a Semtech SX1272 transceiver. The radio must wake, prepare itself, transmit, wait for two receive windows in which the gateway might respond, shut down its radio, perform housekeeping, and return to sleep. The entire sequence, even at SF7, consumes roughly two and a half seconds of active time.</p>
+    </div>
+
+    <p class="prose" data-note="rxWindows">The receive windows deserve particular attention. <span class="snippet" data-ann="rxWindows">RX1 opens exactly one second after transmission ends; RX2 opens one second after that.</span> During these brief intervals, the device listens for a downlink &mdash; an acknowledgement, a configuration change, a command from the network. If nothing is heard, the windows close and the radio powers down. These windows are mandatory in the LoRaWAN protocol, and their current draw &mdash; 38.1 mA for RX1, 35.0 mA for RX2 &mdash; is not negligible.</p>
+
+    <p class="prose">But it is the transmit phase itself that dominates. At 83 milliamps, transmission draws more current than any other state, and its duration is the one that scales directly with spreading factor. This is the lever that the engineer pulls when choosing an SF: a longer transmit phase means more energy per message, but also a message that can be heard from farther away.</p>
+
+    <!-- CODE BLOCK -->
+    <div class="code-block" data-note="codeBlock" data-ann-target="codeBlock">
+      <table>
+        <tr><td class="line-num">1</td><td class="line-content"><span class="comment">// The inner life of a LoRa radio module.</span></td></tr>
+        <tr><td class="line-num">2</td><td class="line-content"><span class="comment">// Eleven states, each a different metabolic rate,</span></td></tr>
+        <tr><td class="line-num">3</td><td class="line-content"><span class="comment">// written from the perspective of the transceiver itself.</span></td></tr>
+        <tr><td class="line-num">4</td><td class="line-content"></td></tr>
+        <tr><td class="line-num">5</td><td class="line-content"><span class="comment">// the engineer decides how slowly we speak</span></td></tr>
+        <tr><td class="line-num">6</td><td class="line-content"><span class="keyword">let</span> <span class="property">spreading_factor</span> = <span class="type">engineer</span>.<span class="type">choose</span>(<span class="number">7</span>, <span class="number">12</span>)</td></tr>
+        <tr><td class="line-num">7</td><td class="line-content"></td></tr>
+        <tr><td class="line-num">8</td><td class="line-content"><span class="comment">// wake from near-death to draw breath</span></td></tr>
+        <tr><td class="line-num">9</td><td class="line-content"><span class="type">draw</span>(<span class="number">22.1</span>, <span class="string">"mA"</span>, <span class="number">168</span>, <span class="string">"ms"</span>)</td></tr>
+        <tr><td class="line-num">10</td><td class="line-content"></td></tr>
+        <tr><td class="line-num">11</td><td class="line-content"><span class="comment">// warm the oscillator, tune the antenna</span></td></tr>
+        <tr><td class="line-num">12</td><td class="line-content"><span class="type">draw</span>(<span class="number">13.3</span>, <span class="string">"mA"</span>, <span class="number">84</span>, <span class="string">"ms"</span>)</td></tr>
+        <tr><td class="line-num">13</td><td class="line-content"></td></tr>
+        <tr><td class="line-num">14</td><td class="line-content"><span class="comment">// now speak — the longest, hungriest moment</span></td></tr>
+        <tr><td class="line-num">15</td><td class="line-content"><span class="type">draw</span>(<span class="number">83.0</span>, <span class="string">"mA"</span>, <span class="type">time_on_air</span>(<span class="property">spreading_factor</span>))</td></tr>
+        <tr><td class="line-num">16</td><td class="line-content"></td></tr>
+        <tr><td class="line-num">17</td><td class="line-content"><span class="comment">// wait one second, then listen for a reply</span></td></tr>
+        <tr><td class="line-num">18</td><td class="line-content"><span class="type">draw</span>(<span class="number">27.0</span>, <span class="string">"mA"</span>, <span class="number">983</span>, <span class="string">"ms"</span>)</td></tr>
+        <tr><td class="line-num">19</td><td class="line-content"><span class="type">draw</span>(<span class="number">38.1</span>, <span class="string">"mA"</span>, <span class="number">100</span>, <span class="string">"ms"</span>)</td></tr>
+        <tr><td class="line-num">20</td><td class="line-content"></td></tr>
+        <tr><td class="line-num">21</td><td class="line-content"><span class="comment">// silence. listen once more, then give up.</span></td></tr>
+        <tr><td class="line-num">22</td><td class="line-content"><span class="type">draw</span>(<span class="number">27.1</span>, <span class="string">"mA"</span>, <span class="number">500</span>, <span class="string">"ms"</span>)</td></tr>
+        <tr><td class="line-num">23</td><td class="line-content"><span class="type">draw</span>(<span class="number">35.0</span>, <span class="string">"mA"</span>, <span class="number">33</span>, <span class="string">"ms"</span>)</td></tr>
+        <tr><td class="line-num">24</td><td class="line-content"></td></tr>
+        <tr><td class="line-num">25</td><td class="line-content"><span class="comment">// power down, tidy the registers, go dark</span></td></tr>
+        <tr><td class="line-num">26</td><td class="line-content"><span class="type">draw</span>(<span class="number">13.2</span>, <span class="string">"mA"</span>, <span class="number">147</span>, <span class="string">"ms"</span>)</td></tr>
+        <tr><td class="line-num">27</td><td class="line-content"><span class="type">draw</span>(<span class="number">21.0</span>, <span class="string">"mA"</span>, <span class="number">268</span>, <span class="string">"ms"</span>)</td></tr>
+        <tr><td class="line-num">28</td><td class="line-content"><span class="type">draw</span>(<span class="number">13.3</span>, <span class="string">"mA"</span>, <span class="number">39</span>, <span class="string">"ms"</span>)</td></tr>
+        <tr><td class="line-num">29</td><td class="line-content"></td></tr>
+        <tr><td class="line-num">30</td><td class="line-content"><span class="comment">// return to the long stillness</span></td></tr>
+        <tr><td class="line-num">31</td><td class="line-content"><span class="type">draw</span>(<span class="number">0.045</span>, <span class="string">"mA"</span>, <span class="type">until_next_wake</span>())</td></tr>
+      </table>
+    </div>
+
+    <!-- SECTION IV -->
+    <div class="section-title">IV. The Dominion of Sleep</div>
+
+    <div class="drop-cap-block" data-note="sleepCurrent">
+      <img class="drop-cap-img" src="./assets/lora-dropcap-B-sleep.png" alt="B" />
+      <p>etween transmissions, the radio sleeps &mdash; and in that sleep, the mathematics of survival are determined. The <span class="snippet" data-ann="sleepCurrent">SX1272 draws 45 microamps in sleep mode. During transmission, it draws 83 milliamps.</span> The ratio between these two states is approximately 1,844 to one &mdash; nearly four orders of magnitude. To visualise this: if the transmit current were the height of a six-storey building, the sleep current would be thinner than a sheet of paper.</p>
+    </div>
+
+    <p class="prose" data-note="dutyCycleReal">This disparity is the reason LoRa devices can run for years on a single battery, and it is also the reason that <span class="snippet" data-ann="dutyCycleReal">a device transmitting once per hour at SF7 is active for only about two seconds out of every 3,600</span> &mdash; a duty cycle of roughly 0.06 percent. The device spends 99.94 percent of its existence in a state of near-hibernation, stirring only to deliver its brief report before retreating once more into the long stillness.</p>
+
+    <p class="prose">This is the regime in which all the interesting engineering happens. When the sleep current is so much smaller than the active current, the question of battery life becomes dominated by two variables: how often the device wakes, and how long each waking lasts. The spreading factor controls the latter; the application designer controls the former.</p>
+
+    <!-- SECTION V -->
+    <div class="section-title">V. On the Calculus of Endurance</div>
+
+    <div class="drop-cap-block" data-note="battFormula">
+      <img class="drop-cap-img" src="./assets/lora-dropcap-W-endurance.png" alt="W" />
+      <p>hen we ask how long a device will last, we are really asking a question about weighted averages. The <span class="snippet" data-ann="battFormula">duty cycle <em>D</em> is the fraction of time spent active: <em>D = A / (A + S)</em></span>, where <em>A</em> is the active time per transmission and <em>S</em> is the sleep time between transmissions. The battery life in hours is then <em>L = B / (D &times; I<sub>A</sub> + (1 &minus; D) &times; I<sub>S</sub>)</em>, where <em>B</em> is the battery capacity in milliamp-hours, <em>I<sub>A</sub></em> is the average active current, and <em>I<sub>S</sub></em> is the sleep current.</p>
+    </div>
+
+    <p class="prose" data-note="intervalLesson">The formula reveals a truth that is not immediately obvious: <span class="snippet" data-ann="intervalLesson">how often you transmit matters far more than how much you send</span>. Doubling the payload adds only a modest increase in transmission time. But doubling the transmission frequency doubles the number of complete wake-transmit-listen-sleep cycles, each of which carries the full overhead of waking the radio, waiting for receive windows, and shutting down again. The fixed costs of each cycle dwarf the marginal cost of additional payload bytes.</p>
+
+    <p class="prose" data-note="diminishing">There is a subtlety here that the formula conceals until you run the numbers. <span class="snippet" data-ann="diminishing">At very low duty cycles, the sleep current begins to dominate the average</span>. A device on a CR2032 coin cell transmitting once per hour draws an average current of about 0.062 mA, of which 0.045 mA &mdash; nearly three quarters &mdash; is simply the cost of existing in sleep mode. Reducing the transmission interval from one hour to twelve would save very little, because the floor is already set by the sleep current. The battery has a theoretical maximum life of about 5.7 years even if the device never transmits at all &mdash; the sleep drain alone consumes the capacity.</p>
+
+    <p class="prose">This is the deepest lesson of the duty cycle model: optimise the transmit interval first, the spreading factor second, and the payload last. And know that there is always a floor beneath which no amount of operational thrift can reach &mdash; the quiet, ceaseless metabolism of the sleeping radio.</p>
+
+    <hr class="rule" />
+
+    <p class="closing">The spreading factor is, in the end, a dial between urgency and endurance. Turn it toward SF7 and your messages fly quickly but fade into the noise at distance. Turn it toward SF12 and each message becomes a slow, patient accumulation of evidence &mdash; readable from kilometres away, but at the cost of time and energy that a small battery can ill afford to spend. The engineer&rsquo;s task is to find the setting where the physics of radio, the geometry of the deployment, and the chemistry of the battery all agree.</p>
+
+    <p class="closing" data-note="adelantadoRef">What makes this negotiation elegant rather than merely tedious is that it is <em>knowable</em>. The formulas are simple. The measurements are published. <span class="snippet" data-ann="adelantadoRef">The limits of the technology have been mapped</span> with admirable precision. What remains is judgement &mdash; the human act of deciding, for this particular field and this particular crop and this particular battery, how slowly the signal should speak.</p>
+
+    <img class="banner" src="./assets/lora-closing-banner.png" alt="" style="margin-top: 36px;" />
+
+    <div class="colophon">
+      Opus 4.6 in Claude Code &middot; 2026<br />
+      Data from Casals et al., <em>Sensors</em> 2017 &amp; Adelantado et al., <em>IEEE Comm. Mag.</em> 2017<br /><br />
+      If you find any errors or issues, please let Prof.&nbsp;Bell know.
+    </div>
+  </div>
+  <div class="margin" id="margin"></div>
+</div>
+
+<script>
+const margin = document.getElementById('margin');
+const page = document.querySelector('.page');
+
+const NOTES = {
+  coinCell: 'A CR2032 coin cell holds roughly 225 mAh — enough to power a wristwatch for years, or a LoRa sensor for months to years depending on how often it speaks.',
+  loraName: 'LoRa is a proprietary modulation scheme owned by Semtech Corporation. LoRaWAN is the open network protocol built on top of it. The two are often conflated.',
+  chirpOrigin: 'The word "chirp" was borrowed from radar, where swept-frequency pulses have been used since the 1940s. The technique exploits the matched-filter principle: correlating against a known sweep pattern extracts signal from noise.',
+  sfAnalogy: 'Each SF step doubles the symbol time. SF7: 1.02 ms per symbol. SF8: 2.05 ms. SF9: 4.10 ms. By SF12: 32.77 ms — thirty-two times longer than SF7.',
+  processingGain: 'Processing gain is the ratio of bandwidth to data rate. Higher SF spreads each bit across more bandwidth, allowing the receiver to "collect" more signal energy per bit from the noise floor.',
+  dataRates: 'In the US 902–928 MHz band, 125 kHz bandwidth supports SF7–SF10 (DR3–DR0). 500 kHz bandwidth supports SF7–SF12 (DR13–DR8). SF11–SF12 at 125 kHz are physically valid but not assigned US data rate numbers.',
+  timeOnAir: 'These figures are for a 10-byte MAC payload at 125 kHz bandwidth with coding rate 4/5, per Adelantado et al., IEEE Communications Magazine, 2017.',
+  casalsRef: 'Casals, L. et al., "Modeling the Energy Performance of LoRaWAN," Sensors, 2017, 17(10), 2364. All current draw and timing values in this article are from their Table 5.',
+  rxWindows: 'The two receive windows are a defining feature of LoRaWAN Class A devices. Class B adds scheduled ping slots; Class C listens continuously. The energy cost rises dramatically with each class.',
+  codeBlock: 'The eleven draw() calls correspond exactly to the eleven states measured by Casals et al. The engineer\'s choice of spreading factor determines only line 15 — everything else is fixed protocol overhead.',
+  sleepCurrent: 'The 0.045 mA sleep current is for the complete mDot module, not just the SX1272 transceiver. The bare transceiver sleeps at 0.1 µA — the microcontroller accounts for the rest.',
+  dutyCycleReal: 'Duty cycle in LoRaWAN is also regulated: many regions limit devices to 1% or 0.1% duty cycle to prevent spectrum congestion. The US band uses a frequency-hopping scheme instead.',
+  battFormula: 'This simplified model assumes constant sleep current and a fixed active profile. Real deployments must also account for self-discharge, temperature effects on battery capacity, and voltage droop under load.',
+  intervalLesson: 'A 10-byte payload at SF7 adds ~39 ms of TX time. But each complete transmission cycle costs ~2,361 ms of active time regardless of payload — the overhead is 60× the marginal TX cost.',
+  diminishing: 'At a 1-hour interval with SF7 on a 225 mAh CR2032: ~1.2 years. At 12-hour interval: ~2.1 years. The 12× reduction in transmissions yields less than 2× improvement in battery life. The sleep floor dominates.',
+  adelantadoRef: 'Adelantado, F. et al., "Understanding the Limits of LoRaWAN," IEEE Communications Magazine, vol. 55, no. 9, pp. 34–40, Sept. 2017.',
+};
+
+const NOTE_OFFSETS = {
+  coinCell: 0,
+  loraName: -10,
+  sfAnalogy: -20,
+  processingGain: 0,
+  dataRates: -10,
+  casalsRef: 0,
+  rxWindows: -15,
+  sleepCurrent: 0,
+  dutyCycleReal: -10,
+  battFormula: 0,
+  intervalLesson: -10,
+  chirpOrigin: 0,
+  timeOnAir: 0,
+  codeBlock: 0,
+  diminishing: -20,
+  adelantadoRef: 0,
+};
+
+// ===== Margin note placement & interaction system =====
+let activeConnection = null;
+
+function placeNotes() {
+  margin.innerHTML = '';
+  const mainEl = document.querySelector('.main');
+  const mainRect = mainEl.getBoundingClientRect();
+
+  Object.keys(NOTES).forEach(id => {
+    const anchor = document.querySelector(`[data-note="${id}"]`);
+    if (!anchor) return;
+
+    const note = document.createElement('div');
+    note.className = 'margin-note';
+    note.dataset.noteId = id;
+    note.textContent = NOTES[id];
+
+    const anchorRect = anchor.getBoundingClientRect();
+    const offset = NOTE_OFFSETS[id] || 0;
+    note.style.top = (anchorRect.top - mainRect.top + offset) + 'px';
+
+    margin.appendChild(note);
+  });
+
+  resolveOverlaps();
+}
+
+function resolveOverlaps() {
+  const notes = Array.from(margin.querySelectorAll('.margin-note'));
+  if (notes.length < 2) return;
+
+  notes.sort((a, b) => parseFloat(a.style.top) - parseFloat(b.style.top));
+
+  for (let i = 1; i < notes.length; i++) {
+    const prev = notes[i - 1];
+    const curr = notes[i];
+    const prevBottom = parseFloat(prev.style.top) + prev.offsetHeight + 12;
+    const currTop = parseFloat(curr.style.top);
+
+    if (currTop < prevBottom) {
+      curr.style.top = prevBottom + 'px';
+    }
+  }
+}
+
+function wireHoverLinks() {
+  // Snippet hover → highlight note
+  document.querySelectorAll('.snippet').forEach(snippet => {
+    const annId = snippet.dataset.ann;
+
+    snippet.addEventListener('mouseenter', () => {
+      activateConnection(annId, snippet);
+    });
+    snippet.addEventListener('mouseleave', () => {
+      deactivateConnection();
+    });
+  });
+
+  // ann-target hover (code blocks etc.) → highlight note
+  document.querySelectorAll('[data-ann-target]').forEach(el => {
+    const annId = el.dataset.annTarget;
+
+    el.addEventListener('mouseenter', () => {
+      activateConnection(annId, el);
+    });
+    el.addEventListener('mouseleave', () => {
+      deactivateConnection();
+    });
+  });
+
+  // Note hover → highlight snippet (or ann-target)
+  margin.querySelectorAll('.margin-note').forEach(note => {
+    const noteId = note.dataset.noteId;
+
+    note.addEventListener('mouseenter', () => {
+      const snippet = document.querySelector(`.snippet[data-ann="${noteId}"]`)
+        || document.querySelector(`[data-ann-target="${noteId}"]`);
+      if (snippet) activateConnection(noteId, snippet);
+    });
+    note.addEventListener('mouseleave', () => {
+      deactivateConnection();
+    });
+  });
+}
+
+function activateConnection(noteId, snippet) {
+  deactivateConnection();
+
+  page.classList.add('has-active-connection');
+
+  // Highlight snippet
+  snippet.classList.add('active');
+
+  // Highlight note
+  const note = margin.querySelector(`[data-note-id="${noteId}"]`);
+  if (note) note.classList.add('active');
+
+  // Highlight parent paragraph
+  const parent = snippet.closest('.prose, .drop-cap-block, .closing, .code-block');
+  if (parent) parent.classList.add('highlight-parent');
+
+  // Draw connection line
+  if (note) drawConnection(snippet, note);
+
+  activeConnection = { noteId, snippet, note, parent };
+}
+
+function deactivateConnection() {
+  if (!activeConnection) return;
+
+  page.classList.remove('has-active-connection');
+
+  activeConnection.snippet.classList.remove('active');
+  if (activeConnection.note) activeConnection.note.classList.remove('active');
+  if (activeConnection.parent) activeConnection.parent.classList.remove('highlight-parent');
+
+  removeConnectionLine();
+  activeConnection = null;
+}
+
+function drawConnection(snippet, note) {
+  removeConnectionLine();
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('connection-line');
+  svg.style.position = 'fixed';
+  svg.style.top = '0';
+  svg.style.left = '0';
+  svg.style.width = '100%';
+  svg.style.height = '100%';
+
+  const sRect = snippet.getBoundingClientRect();
+  const nRect = note.getBoundingClientRect();
+
+  const x1 = sRect.right + 4;
+  const y1 = sRect.top + sRect.height / 2;
+  const x2 = nRect.left - 4;
+  const y2 = nRect.top + 12;
+
+  const midX = (x1 + x2) / 2;
+
+  // Bezier path with animated dashed stroke
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`);
+  path.setAttribute('stroke', '#DE7356');
+  path.setAttribute('stroke-width', '1.5');
+  path.setAttribute('stroke-dasharray', '6 4');
+  path.setAttribute('fill', 'none');
+  path.setAttribute('opacity', '0.6');
+  svg.appendChild(path);
+
+  // Animate dash offset
+  const animEl = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+  animEl.setAttribute('attributeName', 'stroke-dashoffset');
+  animEl.setAttribute('from', '0');
+  animEl.setAttribute('to', '-20');
+  animEl.setAttribute('dur', '1.5s');
+  animEl.setAttribute('repeatCount', 'indefinite');
+  path.appendChild(animEl);
+
+  // Endpoint dots
+  const dot1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot1.setAttribute('cx', x1);
+  dot1.setAttribute('cy', y1);
+  dot1.setAttribute('r', '3');
+  dot1.setAttribute('fill', '#DE7356');
+  dot1.setAttribute('opacity', '0.7');
+  svg.appendChild(dot1);
+
+  const dot2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot2.setAttribute('cx', x2);
+  dot2.setAttribute('cy', y2);
+  dot2.setAttribute('r', '3');
+  dot2.setAttribute('fill', '#DE7356');
+  dot2.setAttribute('opacity', '0.7');
+  svg.appendChild(dot2);
+
+  document.body.appendChild(svg);
+}
+
+function redrawActiveConnection() {
+  if (!activeConnection) return;
+  const { noteId, snippet } = activeConnection;
+  const note = margin.querySelector(`[data-note-id="${noteId}"]`);
+  if (note && snippet) drawConnection(snippet, note);
+}
+
+function removeConnectionLine() {
+  document.querySelectorAll('.connection-line').forEach(el => el.remove());
+}
+
+// Boot — wait for fonts to load before placing notes
+document.fonts.ready.then(() => {
+  requestAnimationFrame(() => {
+    placeNotes();
+    wireHoverLinks();
+  });
+});
+
+window.addEventListener('resize', () => {
+  placeNotes();
+  wireHoverLinks();
+  redrawActiveConnection();
+});
+
+// Redraw connection lines on scroll so they stay attached
+window.addEventListener('scroll', () => {
+  redrawActiveConnection();
+}, { passive: true });
+</script>
+</body>
+</html>
