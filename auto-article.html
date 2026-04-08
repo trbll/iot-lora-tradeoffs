@@ -613,11 +613,11 @@ function updateBodyRipples(now) {
   bodyRipples = bodyRipples.filter(r => now - r.time < 2500)
 
   if (bodyRipples.length === 0) {
-    // Clear transforms when no ripples active
+    // Clear transforms and color when no ripples active
     document.querySelectorAll('.wave-word').forEach(w => {
-      if (w.style.transform) {
+      if (w.style.transform || w.style.color) {
         w.style.transform = ''
-        w.style.opacity = ''
+        w.style.color = ''
       }
     })
     requestAnimationFrame(updateBodyRipples)
@@ -631,6 +631,7 @@ function updateBodyRipples(now) {
     const wy = rect.top + rect.height / 2
 
     let totalDx = 0, totalDy = 0
+    let maxPurple = 0
 
     for (const rip of bodyRipples) {
       const dist = Math.hypot(wx - rip.x, wy - rip.y)
@@ -647,6 +648,10 @@ function updateBodyRipples(now) {
 
         totalDy += oscillation * amplitude * 0.8
         totalDx += Math.sin(phase * 0.7) * amplitude * 0.2
+
+        // Purple intensity tracks the positive peaks of the ripple
+        const purpleAmp = Math.max(0, oscillation) * amplitude * 0.5
+        maxPurple = Math.max(maxPurple, purpleAmp)
       }
     }
 
@@ -654,6 +659,17 @@ function updateBodyRipples(now) {
       word.style.transform = `translate(${totalDx.toFixed(2)}px, ${totalDy.toFixed(2)}px)`
     } else {
       word.style.transform = ''
+    }
+
+    // Blend from default text color (42,36,32) toward purple (105,55,130)
+    if (maxPurple > 0.01) {
+      const t = Math.min(maxPurple, 1)
+      const r = Math.round(42 + (105 - 42) * t)
+      const g = Math.round(36 + (55 - 36) * t)
+      const b = Math.round(32 + (130 - 32) * t)
+      word.style.color = `rgb(${r}, ${g}, ${b})`
+    } else {
+      word.style.color = ''
     }
   }
 
