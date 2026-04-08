@@ -89,6 +89,7 @@ body {
   display: inline-block;
   will-change: transform;
   text-decoration: inherit;
+  transition: transform 0.2s ease-out;
 }
 
 .drop-cap-block {
@@ -634,6 +635,30 @@ function updateBodyRipples(now) {
     let totalDx = 0, totalDy = 0
     let maxPurple = 0
 
+    // Bezier line displacement — push words perpendicular to the active connection line
+    if (activeBezierSamples.length > 0) {
+      let minDist = Infinity;
+      let nearestIdx = 0;
+      for (let si = 0; si < activeBezierSamples.length; si++) {
+        const sp = activeBezierSamples[si];
+        const d = Math.hypot(wx - sp.x, wy - sp.y);
+        if (d < minDist) { minDist = d; nearestIdx = si; }
+      }
+
+      const pushRadius = 80;
+      if (minDist < pushRadius) {
+        const sp = activeBezierSamples[nearestIdx];
+        // Push direction: perpendicular to curve (away from the nearest sample point)
+        const dx = wx - sp.x;
+        const dy = wy - sp.y;
+        const dist = minDist || 0.1;
+        const falloff = Math.pow(1 - dist / pushRadius, 2); // quadratic falloff — strong near, gentle far
+        const strength = falloff * 8;
+        totalDx += (dx / dist) * strength;
+        totalDy += (dy / dist) * strength;
+      }
+    }
+
     for (const rip of bodyRipples) {
       const dist = Math.hypot(wx - rip.x, wy - rip.y)
       const age = now - rip.time
@@ -879,6 +904,21 @@ function deactivateConnection() {
   activeConnection = null;
 }
 
+// Active bezier samples for text displacement
+let activeBezierSamples = [];
+
+function sampleCubicBezier(x0, y0, cx0, cy0, cx1, cy1, x1, y1, n) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const mt = 1 - t;
+    const x = mt*mt*mt*x0 + 3*mt*mt*t*cx0 + 3*mt*t*t*cx1 + t*t*t*x1;
+    const y = mt*mt*mt*y0 + 3*mt*mt*t*cy0 + 3*mt*t*t*cy1 + t*t*t*y1;
+    pts.push({ x, y });
+  }
+  return pts;
+}
+
 function drawConnection(snippet, note) {
   removeConnectionLine();
 
@@ -899,6 +939,9 @@ function drawConnection(snippet, note) {
   const y2 = nRect.top + 12;
 
   const midX = (x1 + x2) / 2;
+
+  // Sample the bezier for text displacement
+  activeBezierSamples = sampleCubicBezier(x1, y1, midX, y1, midX, y2, x2, y2, 80);
 
   // Bezier path with animated dashed stroke
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -948,6 +991,7 @@ function redrawActiveConnection() {
 
 function removeConnectionLine() {
   document.querySelectorAll('.connection-line').forEach(el => el.remove());
+  activeBezierSamples = [];
 }
 
 // Boot — wait for fonts to load before placing notes
