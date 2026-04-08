@@ -55,6 +55,20 @@ body {
   margin-bottom: 8px;
   padding-top: 8px;
 }
+.title-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  margin-bottom: 0;
+  padding-top: 8px;
+}
+.title-canvas-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* Hide the static title when canvas is active */
+.title.has-canvas { display: none; }
 .subtitle {
   text-align: center;
   font-size: 15px;
@@ -70,6 +84,13 @@ body {
   height: auto;
   margin-bottom: 36px;
 }
+/* Body text wave words */
+.wave-word {
+  display: inline-block;
+  will-change: transform;
+  text-decoration: inherit;
+}
+
 .drop-cap-block {
   margin-bottom: 20px;
   overflow: visible;
@@ -81,14 +102,13 @@ body {
   margin: 2px 16px 4px 0;
   object-fit: cover;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: width 0.35s ease, height 0.35s ease, box-shadow 0.35s ease;
   border-radius: 2px;
 }
 .drop-cap-img:hover {
-  transform: scale(1.35);
+  width: 150px;
+  height: 150px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  z-index: 10;
-  position: relative;
 }
 
 /* Lightbox overlay */
@@ -283,7 +303,10 @@ body {
 <div class="page">
   <div class="spacer"></div>
   <div class="main">
-    <div class="title">On the Patience of Signals</div>
+    <div class="title" id="static-title" style="display:none;">On the Patience of Signals</div>
+    <div class="title-canvas-wrap" id="title-canvas-wrap">
+      <canvas id="title-canvas"></canvas>
+    </div>
     <div class="subtitle">a meditation on the tradeoffs of reach and speed in low-power radio</div>
 
     <img class="banner" src="./assets/lora-banner.png" alt="" />
@@ -413,6 +436,257 @@ body {
   </div>
   <div class="margin" id="margin"></div>
 </div>
+
+<script type="module">
+// ===== PRETEXT CAUSTIC TITLE =====
+const TITLE_TEXT = 'ON THE PATIENCE OF SIGNALS'
+const titleCanvas = document.getElementById('title-canvas')
+const titleWrap = document.getElementById('title-canvas-wrap')
+const staticTitle = document.getElementById('static-title')
+
+let titleChars = []
+let titleRipples = []
+let lastTitleMX = -999, lastTitleMY = -999
+let titleCtx = null
+let titleW = 0, titleH = 0
+const TITLE_FONT_SIZE = 22
+const TITLE_LETTER_SPACING = TITLE_FONT_SIZE * 0.3
+const TITLE_FONT = `700 ${TITLE_FONT_SIZE}px Georgia, 'Palatino Linotype', Palatino, serif`
+
+function initTitle() {
+  const dpr = window.devicePixelRatio || 1
+  const rect = titleWrap.getBoundingClientRect()
+  titleW = rect.width
+  titleH = rect.height
+  titleCanvas.width = titleW * dpr
+  titleCanvas.height = titleH * dpr
+  titleCtx = titleCanvas.getContext('2d')
+  titleCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  titleCtx.font = TITLE_FONT
+  titleCtx.textBaseline = 'middle'
+
+  // Measure total width with letter spacing
+  let totalW = 0
+  for (const ch of TITLE_TEXT) {
+    totalW += titleCtx.measureText(ch).width + TITLE_LETTER_SPACING
+  }
+  totalW -= TITLE_LETTER_SPACING // no trailing space
+
+  // Lay out characters centered
+  titleChars = []
+  let x = (titleW - totalW) / 2
+  const y = titleH / 2
+  for (const ch of TITLE_TEXT) {
+    const cw = titleCtx.measureText(ch).width
+    titleChars.push({ char: ch, baseX: x, baseY: y, width: cw })
+    x += cw + TITLE_LETTER_SPACING
+  }
+
+  titleWrap.style.display = 'block'
+  staticTitle.style.display = 'none'
+}
+
+function createTitleRipple(x, y, strength, maxRadius) {
+  titleRipples.push({ x, y, time: performance.now(), strength, maxRadius })
+}
+
+function renderTitle(now) {
+  if (!titleCtx) return
+  titleCtx.clearRect(0, 0, titleW, titleH)
+  titleCtx.font = TITLE_FONT
+  titleCtx.textBaseline = 'middle'
+
+  const timeScale = now * 0.0003
+
+  // Prune old ripples
+  titleRipples = titleRipples.filter(r => now - r.time < 4000)
+
+  for (let i = 0; i < titleChars.length; i++) {
+    const c = titleChars[i]
+    if (c.char === ' ') continue
+
+    let dx = 0, dy = 0
+    let causticIntensity = 0.3
+
+    // Ambient caustic drift — per character
+    const w1 = Math.sin(c.baseX * 0.008 + timeScale)
+    const w2 = Math.sin((c.baseX * 0.006 + i * 0.3) - timeScale * 1.3)
+    const w3 = Math.cos(i * 0.15 + timeScale * 1.5)
+    const caustic = Math.pow(Math.sin((w1 + w2 + w3) * 0.5), 4) * 1.4
+
+    dx += w1 * 0.4
+    dy += w3 * 0.3
+    causticIntensity += caustic * 0.7
+
+    // Ripple displacement
+    for (const rip of titleRipples) {
+      const dist = Math.hypot(c.baseX - rip.x, c.baseY - rip.y)
+      const age = now - rip.time
+      const wavefront = age * 0.35
+
+      if (dist < wavefront && dist < rip.maxRadius) {
+        const spatialDamping = Math.exp(-dist * 0.004)
+        const temporalDamping = Math.exp(-age * 0.001)
+        const smooth = Math.min(1, (wavefront - dist) / 50)
+        const phase = dist * 0.05 - age * 0.003
+        const oscillation = Math.cos(phase)
+        const amplitude = rip.strength * spatialDamping * temporalDamping * smooth
+        const angle = Math.atan2(c.baseY - rip.y, c.baseX - rip.x)
+
+        dx += Math.cos(angle) * oscillation * amplitude
+        dy += Math.sin(angle) * oscillation * amplitude
+        causticIntensity += Math.max(0, oscillation) * amplitude * 0.08
+      }
+    }
+
+    const alpha = Math.min(1, 0.15 + 0.85 * Math.min(1, causticIntensity))
+    titleCtx.fillStyle = `rgba(26, 22, 20, ${alpha})`
+    titleCtx.fillText(c.char, c.baseX + dx, c.baseY + dy)
+  }
+
+  requestAnimationFrame(renderTitle)
+}
+
+titleWrap.addEventListener('mousemove', (e) => {
+  const rect = titleWrap.getBoundingClientRect()
+  const x = e.clientX - rect.left, y = e.clientY - rect.top
+  const dist = Math.hypot(x - lastTitleMX, y - lastTitleMY)
+  if (dist > 25) {
+    createTitleRipple(x, y, 5, 400)
+    lastTitleMX = x; lastTitleMY = y
+  }
+})
+
+titleWrap.addEventListener('click', (e) => {
+  const rect = titleWrap.getBoundingClientRect()
+  createTitleRipple(e.clientX - rect.left, e.clientY - rect.top, 20, 600)
+})
+
+// ===== BODY TEXT RIPPLE EFFECTS =====
+// Wrap each word in prose/drop-cap-block/closing in a span for physics
+function wrapBodyWords() {
+  const containers = document.querySelectorAll('.prose, .drop-cap-block p, .closing')
+  containers.forEach(el => {
+    // Skip if already wrapped
+    if (el.dataset.wrapped) return
+    el.dataset.wrapped = '1'
+
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+    const textNodes = []
+    while (walker.nextNode()) textNodes.push(walker.currentNode)
+
+    for (const node of textNodes) {
+      const text = node.textContent
+      if (!text.trim()) continue
+
+      const frag = document.createDocumentFragment()
+      // Split on word boundaries but keep spaces
+      const parts = text.split(/(\s+)/)
+      for (const part of parts) {
+        if (/^\s+$/.test(part)) {
+          frag.appendChild(document.createTextNode(part))
+        } else if (part) {
+          const span = document.createElement('span')
+          span.className = 'wave-word'
+          span.textContent = part
+          frag.appendChild(span)
+        }
+      }
+      node.parentNode.replaceChild(frag, node)
+    }
+  })
+}
+
+let bodyRipples = []
+
+function createBodyRipple(x, y, strength) {
+  bodyRipples.push({ x, y, time: performance.now(), strength })
+}
+window.createBodyRipple = createBodyRipple
+
+function updateBodyRipples(now) {
+  // Prune old ripples
+  bodyRipples = bodyRipples.filter(r => now - r.time < 2500)
+
+  if (bodyRipples.length === 0) {
+    // Clear transforms when no ripples active
+    document.querySelectorAll('.wave-word').forEach(w => {
+      if (w.style.transform) {
+        w.style.transform = ''
+        w.style.opacity = ''
+      }
+    })
+    requestAnimationFrame(updateBodyRipples)
+    return
+  }
+
+  const words = document.querySelectorAll('.wave-word')
+  for (const word of words) {
+    const rect = word.getBoundingClientRect()
+    const wx = rect.left + rect.width / 2
+    const wy = rect.top + rect.height / 2
+
+    let totalDx = 0, totalDy = 0
+
+    for (const rip of bodyRipples) {
+      const dist = Math.hypot(wx - rip.x, wy - rip.y)
+      const age = now - rip.time
+      const wavefront = age * 0.5
+
+      if (dist < wavefront && dist < 500) {
+        const spatialDamping = Math.exp(-dist * 0.003)
+        const temporalDamping = Math.exp(-age * 0.0015)
+        const smooth = Math.min(1, (wavefront - dist) / 80)
+        const phase = dist * 0.03 - age * 0.004
+        const oscillation = Math.cos(phase)
+        const amplitude = rip.strength * spatialDamping * temporalDamping * smooth
+
+        totalDy += oscillation * amplitude * 0.8
+        totalDx += Math.sin(phase * 0.7) * amplitude * 0.2
+      }
+    }
+
+    if (Math.abs(totalDx) > 0.05 || Math.abs(totalDy) > 0.05) {
+      word.style.transform = `translate(${totalDx.toFixed(2)}px, ${totalDy.toFixed(2)}px)`
+    } else {
+      word.style.transform = ''
+    }
+  }
+
+  requestAnimationFrame(updateBodyRipples)
+}
+
+// Click/tap anywhere on main content creates a ripple
+document.querySelector('.main').addEventListener('click', (e) => {
+  // Don't ripple on interactive elements
+  if (e.target.closest('.snippet, .drop-cap-img, .lightbox-overlay, a')) return
+  createBodyRipple(e.clientX, e.clientY, 8)
+})
+
+// Subtle hover proximity effect
+let lastBodyMX = -999, lastBodyMY = -999
+document.querySelector('.main').addEventListener('mousemove', (e) => {
+  const dist = Math.hypot(e.clientX - lastBodyMX, e.clientY - lastBodyMY)
+  if (dist > 55) {
+    createBodyRipple(e.clientX, e.clientY, 2.5)
+    lastBodyMX = e.clientX; lastBodyMY = e.clientY
+  }
+})
+
+// Boot
+document.fonts.ready.then(() => {
+  try {
+    initTitle()
+    requestAnimationFrame(renderTitle)
+  } catch (e) {
+    staticTitle.style.display = ''
+    titleWrap.style.display = 'none'
+  }
+
+  wrapBodyWords()
+  requestAnimationFrame(updateBodyRipples)
+})
+</script>
 
 <script>
 const margin = document.getElementById('margin');
@@ -546,6 +820,14 @@ function activateConnection(noteId, snippet) {
 
   page.classList.add('has-active-connection');
 
+  // Pulse ripple from the snippet location
+  const sRect = snippet.getBoundingClientRect();
+  const cx = sRect.left + sRect.width / 2;
+  const cy = sRect.top + sRect.height / 2;
+  if (window.createBodyRipple) {
+    window.createBodyRipple(cx, cy, 4);
+  }
+
   // Highlight snippet
   snippet.classList.add('active');
 
@@ -666,8 +948,20 @@ window.addEventListener('scroll', () => {
   redrawActiveConnection();
 }, { passive: true });
 
-// ===== Drop cap lightbox =====
+// ===== Drop cap hover ripples + lightbox =====
 document.querySelectorAll('.drop-cap-img').forEach(img => {
+  img.addEventListener('mouseenter', () => {
+    if (window.createBodyRipple) {
+      const r = img.getBoundingClientRect();
+      window.createBodyRipple(r.left + r.width / 2, r.top + r.height / 2, 5);
+    }
+  });
+  img.addEventListener('mouseleave', () => {
+    if (window.createBodyRipple) {
+      const r = img.getBoundingClientRect();
+      window.createBodyRipple(r.left + r.width / 2, r.top + r.height / 2, 4);
+    }
+  });
   img.addEventListener('click', (e) => {
     e.stopPropagation();
 
@@ -701,6 +995,7 @@ document.querySelectorAll('.drop-cap-img').forEach(img => {
     requestAnimationFrame(() => overlay.classList.add('visible'));
   });
 });
+
 </script>
 </body>
 </html>
